@@ -1,0 +1,3 @@
+[submodule "external/c-reference-signer"]
+	path = external/c-reference-signer
+	url = https://github.com/MinaProtocol/c-reference-signer
