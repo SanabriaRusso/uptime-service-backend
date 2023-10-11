@@ -6,7 +6,7 @@ if [[ "$OUT" == "" ]]; then
   OUT="$PWD/result"
 fi
 
-ref_signer="$PWD/../../external/c-reference-signer"
+ref_signer="$PWD/external/c-reference-signer"
 
 mkdir -p "$OUT"/{headers,bin}
 rm -f "$OUT"/libmina_signer.so # Otherwise re-building without clean causes permissions issue
