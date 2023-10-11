@@ -1,6 +1,6 @@
-# Delegation program backend
+# Uptime Service Backend
 
-As part of delegation program, nodes are to upload some proof of their activity. These proofs are to be accumulated and utilized for scoring. This service provides the nodes with a way to siubmit their data for score calculation.
+As part of delegation program, nodes are to upload some proof of their activity. These proofs are to be accumulated and utilized for scoring. This service provides the nodes with a way to submit their data for score calculation.
 
 ## Constants
 
