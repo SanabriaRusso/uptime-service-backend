@@ -26,8 +26,11 @@ case "$1" in
     LD_LIBRARY_PATH="$OUT" $GO test
     ;;
   docker)
-    tag=delegation-backend
-    docker build -t "$tag" -f dockerfiles/Dockerfile-delegation-backend .
+    if [[ "$TAG" == "" ]]; then
+      echo "Specify TAG env variable."
+      exit 1
+    fi
+    docker build -t "$TAG" -f dockerfiles/Dockerfile-delegation-backend .
     ;;
   "")
     cd src/cmd/delegation_backend

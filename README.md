@@ -105,11 +105,11 @@ $ nix-shell
 
 ### Building the Docker Image
 
-Within the `nix-shell`, use the following command to create a Docker image:
+To create a Docker image within the `nix-shell`, set the `$TAG` environment variable for naming the image and then execute the `make docker` command:
 
 ```bash
 $ nix-shell
-[nix-shell]$ make docker
+[nix-shell]$ TAG=uptime-service-backend make docker
 ```
 
 ## Testing
