@@ -25,22 +25,9 @@ case "$1" in
     cd src/delegation_backend
     LD_LIBRARY_PATH="$OUT" $GO test
     ;;
-  docker-run)
-    if [[ "$GOOGLE_APPLICATION_CREDENTIALS" == "" ]]; then
-      echo "Specify path to credentials JSON file in env variable GOOGLE_APPLICATION_CREDENTIALS"
-      exit 1
-    fi
-    tag=delegation-backend-test
+  docker)
+    tag=delegation-backend
     docker build -t "$tag" -f dockerfiles/Dockerfile-delegation-backend .
-    docker run -p 8080:8080 -v "$GOOGLE_APPLICATION_CREDENTIALS":/creds.json -e GOOGLE_APPLICATION_CREDENTIALS=/creds.json "$tag"
-    ;;
-  docker-toolchain | docker)
-    if [[ "$VERSION" == "" ]]; then
-      echo "Specify VERSION"
-      exit 1
-    fi
-    # cd ../../..
-    scripts/release-docker.sh -s delegation-backend${1:6} -v "$VERSION"
     ;;
   "")
     cd src/cmd/delegation_backend
