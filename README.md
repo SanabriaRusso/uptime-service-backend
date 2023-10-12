@@ -89,3 +89,34 @@ On receiving payload on `/submit`, we perform the following validation:
 - Amount of requests by `submitter` in the last hour is not exceeding `REQUESTS_PER_PK_HOURLY`
 
 After receiving payload on `/submit` , we update in-memory public key rate-limiting state and save the contents of `block` field as `blocks/<block_hash>.dat`.
+
+## Building
+
+To build either a binary of the service or a Docker image, you must operate within the context of `nix-shell`. If you haven't installed it yet, follow the instructions at [install-nix](https://nix.dev/install-nix).
+
+### Building the Binary
+
+Enter the `nix-shell` and execute the `make` command:
+
+```bash
+$ nix-shell
+[nix-shell]$ make
+```
+
+### Building the Docker Image
+
+Within the `nix-shell`, use the following command to create a Docker image:
+
+```bash
+$ nix-shell
+[nix-shell]$ make docker
+```
+
+## Testing
+
+To run tests, enter the `nix-shell` and use the `make test` command:
+
+```bash
+$ nix-shell
+[nix-shell]$ make test
+```
