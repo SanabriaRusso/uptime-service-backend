@@ -1,6 +1,6 @@
 with import <nixpkgs> { };
 let
-  minaSigner = import ../../external/c-reference-signer;
+  minaSigner = import ./external/c-reference-signer;
 in
 {
   devEnv = stdenv.mkDerivation {
