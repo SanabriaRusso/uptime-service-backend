@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"math/rand"
 	"net/http/httptest"
+	"os"
 	"testing"
 	"time"
 
@@ -15,6 +16,13 @@ import (
 
 const TSPG_EXPECTED_1 = `{"block":"zLgvHQzxSh8MWlTjXK+cMA==","created_at":"2021-07-01T16:21:33Z","peer_id":"MLF0jAGTpL84LLerLddNs5M10NCHM+BwNeMxK78+"}`
 const TSPG_EXPECTED_2 = `{"block":"zLgvHQzxSh8MWlTjXK+cMA==","created_at":"2021-07-01T16:21:33Z","peer_id":"MLF0jAGTpL84LLerLddNs5M10NCHM+BwNeMxK78+","snark_work":"Bjtox/3Yu4cT5eVCQz/JQ+P3Ce1JmCIE7N6b1MAa"}`
+
+func setNetworkEnvVar() {
+	err := os.Setenv("NETWORK", "mainnet")
+	if err != nil {
+		panic(err)
+	}
+}
 
 func mkB64(s string) *Base64 {
 	r := new(Base64)
@@ -142,6 +150,7 @@ func TestUnauthorized(t *testing.T) {
 }
 
 func TestPkLimitExceeded(t *testing.T) {
+	setNetworkEnvVar()
 	body := readTestFile("req-with-snark", t)
 	var req submitRequest
 	if err := json.Unmarshal(body, &req); err != nil {
@@ -174,6 +183,7 @@ func TestPkLimitExceeded(t *testing.T) {
 }
 
 func TestSuccess(t *testing.T) {
+	setNetworkEnvVar()
 	testNames := []string{"req-no-snark", "req-with-snark"}
 	for _, f := range testNames {
 		body := readTestFile(f, t)
