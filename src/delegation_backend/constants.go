@@ -10,8 +10,6 @@ const REQUESTS_PER_PK_HOURLY = 120
 const DELEGATION_BACKEND_LISTEN_TO = ":8080"
 const TIME_DIFF_DELTA time.Duration = -5 * 60 * 1000000000 // -5m
 const WHITELIST_REFRESH_INTERVAL = 10 * 60 * 1000000000    // 10m
-const DELEGATION_WHITELIST_LIST = "Form Responses 1"
-const DELEGATION_WHITELIST_COLUMN = "E"
 
 var PK_PREFIX = [...]byte{1, 1}
 var SIG_PREFIX = [...]byte{1}

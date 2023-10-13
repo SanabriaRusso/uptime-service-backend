@@ -28,8 +28,8 @@ func processRows(rows [][](interface{})) Whitelist {
 // and extract public keys out of the column containing
 // public keys of program participants.
 func RetrieveWhitelist(service *sheets.Service, log *logging.ZapEventLogger, appCfg AppConfig) Whitelist {
-	col := DELEGATION_WHITELIST_COLUMN
-	readRange := DELEGATION_WHITELIST_LIST + "!" + col + ":" + col
+	col := appCfg.DelegationWhitelistColumn
+	readRange := appCfg.DelegationWhitelistList + "!" + col + ":" + col
 	spId := appCfg.GsheetId
 	resp, err := service.Spreadsheets.Values.Get(spId, readRange).Do()
 	if err != nil {
