@@ -59,9 +59,21 @@ func LoadEnv(log logging.EventLogger) AppConfig {
 			log.Fatal("missing AWS_ACCOUNT_ID environment variable")
 		}
 
+		delegationWhitelistList := os.Getenv("DELEGATION_WHITELIST_LIST")
+		if delegationWhitelistList == "" {
+			log.Fatal("missing DELEGATION_WHITELIST_LIST environment variable")
+		}
+
+		delegationWhitelistColumn := os.Getenv("DELEGATION_WHITELIST_COLUMN")
+		if delegationWhitelistColumn == "" {
+			log.Fatal("missing DELEGATION_WHITELIST_COLUMN environment variable")
+		}
+
 		config = AppConfig{
-			NetworkName: networkName,
-			GsheetId:    gsheetId,
+			NetworkName:               networkName,
+			GsheetId:                  gsheetId,
+			DelegationWhitelistList:   delegationWhitelistList,
+			DelegationWhitelistColumn: delegationWhitelistColumn,
 			Aws: AwsConfig{
 				Region:    awsRegion,
 				AccountId: awsAccountId,
@@ -83,9 +95,11 @@ type AwsConfig struct {
 }
 
 type AppConfig struct {
-	Aws         AwsConfig `json:"aws"`
-	NetworkName string    `json:"network_name"`
-	GsheetId    string    `json:"gsheet_id"`
+	Aws                       AwsConfig `json:"aws"`
+	NetworkName               string    `json:"network_name"`
+	GsheetId                  string    `json:"gsheet_id"`
+	DelegationWhitelistList   string    `json:"delegation_whitelist_list"`
+	DelegationWhitelistColumn string    `json:"delegation_whitelist_column"`
 }
 
 type AwsCredentials struct {
