@@ -18,6 +18,11 @@ jobs:
     - name: 📥 Checkout
       uses: actions/checkout@v3    
 
+    - name: 📥 Update Git Submodules
+      run: |
+        git submodule init
+        git submodule update
+
     - name: 📦 Install Nix
       uses: cachix/install-nix-action@v22
       with:
