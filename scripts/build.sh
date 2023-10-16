@@ -30,7 +30,7 @@ case "$1" in
       echo "Specify TAG env variable."
       exit 1
     fi
-    docker build -t "$TAG" -f dockerfiles/Dockerfile-delegation-backend .
+    docker build -t "673156464838.dkr.ecr.us-west-2.amazonaws.com/block-producers-uptime:$TAG" -f dockerfiles/Dockerfile-delegation-backend .
     ;;
   "")
     cd src/cmd/delegation_backend
