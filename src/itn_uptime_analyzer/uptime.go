@@ -3,6 +3,7 @@ package itn_uptime_analyzer
 import (
 	dg "block_producers_uptime/delegation_backend"
 	"encoding/json"
+	"fmt"
 	"io"
 	"regexp"
 	"strconv"
@@ -54,7 +55,7 @@ func (identity Identity) GetUptime(config AppConfig, sheet *sheets.Service, ctx 
 			if err != nil {
 				log.Fatalf("Error parsing time: %v\n", err)
 			}
-
+			fmt.Println("Submission time is: ", submissionTime)
 			//Open json file only if the pubkey matches the pubkey in the name
 			if regex.MatchString(*obj.Key) {
 				if (submissionTime.After(lastExecutionTime)) && (submissionTime.Before(currentTime)) {
@@ -82,46 +83,55 @@ func (identity Identity) GetUptime(config AppConfig, sheet *sheets.Service, ctx 
 
 					if submissionDataToday.GraphqlControlPort != 0 {
 						if (identity.publicKey == submissionDataToday.Submitter.String()) && (identity.publicIp == submissionDataToday.RemoteAddr) && (*identity.graphQLPort == strconv.Itoa(submissionDataToday.GraphqlControlPort)) {
-							if lastSubmissionTimeString != "" {
-								lastSubmissionTime, err = time.Parse(time.RFC3339, lastSubmissionTimeString)
-								if err != nil {
-									log.Fatalf("Error parsing time: %v\n", err)
-								}
-							}
 
 							currentSubmissionTime, err := time.Parse(time.RFC3339, submissionDataToday.CreatedAt)
 							if err != nil {
 								log.Fatalf("Error parsing time: %v\n", err)
 							}
 
-							if (lastSubmissionTimeString != "") && (currentSubmissionTime.After(lastSubmissionTime.Add(time.Duration(syncPeriod-5) * time.Minute))) && (currentSubmissionTime.Before(lastSubmissionTime.Add(time.Duration(syncPeriod+5) * time.Minute))) {
-								uptimeYesterday = append(uptimeYesterday, true)
-								lastSubmissionTimeString = submissionDataToday.CreatedAt
-							} else if lastSubmissionTimeString == "" {
-								uptimeYesterday = append(uptimeYesterday, true)
-								lastSubmissionTimeString = submissionDataToday.CreatedAt
-							}
-						}
-					} else {
-						if (identity.publicKey == submissionDataToday.Submitter.String()) && (identity.publicIp == submissionDataToday.RemoteAddr) {
 							if lastSubmissionTimeString != "" {
 								lastSubmissionTime, err = time.Parse(time.RFC3339, lastSubmissionTimeString)
 								if err != nil {
 									log.Fatalf("Error parsing time: %v\n", err)
 								}
+							} else {
+								uptimeToday = append(uptimeToday, true)
+								lastSubmissionTimeString = submissionDataToday.CreatedAt
+								continue
+							}
 
-								currentSubmissionTime, err := time.Parse(time.RFC3339, submissionDataToday.CreatedAt)
+							if (lastSubmissionTimeString != "") && (currentSubmissionTime.After(lastSubmissionTime.Add(time.Duration(syncPeriod-5) * time.Minute))) {
+								uptimeToday = append(uptimeToday, true)
+								lastSubmissionTimeString = submissionDataToday.CreatedAt
+								continue
+							} else {
+								continue
+							}
+						}
+					} else {
+						if (identity.publicKey == submissionDataToday.Submitter.String()) && (identity.publicIp == submissionDataToday.RemoteAddr) {
+
+							currentSubmissionTime, err := time.Parse(time.RFC3339, submissionDataToday.CreatedAt)
+							if err != nil {
+								log.Fatalf("Error parsing time: %v\n", err)
+							}
+							if lastSubmissionTimeString != "" {
+								lastSubmissionTime, err = time.Parse(time.RFC3339, lastSubmissionTimeString)
 								if err != nil {
 									log.Fatalf("Error parsing time: %v\n", err)
 								}
+							} else {
+								uptimeToday = append(uptimeToday, true)
+								lastSubmissionTimeString = submissionDataToday.CreatedAt
+								continue
+							}
 
-								if (lastSubmissionTimeString != "") && (currentSubmissionTime.After(lastSubmissionTime.Add(time.Duration(syncPeriod-5) * time.Minute))) && (currentSubmissionTime.Before(lastSubmissionTime.Add(time.Duration(syncPeriod+5) * time.Minute))) {
-									uptimeToday = append(uptimeToday, true)
-									lastSubmissionTimeString = submissionDataToday.CreatedAt
-								} else if lastSubmissionTimeString == "" {
-									uptimeToday = append(uptimeToday, true)
-									lastSubmissionTimeString = submissionDataToday.CreatedAt
-								}
+							if (lastSubmissionTimeString != "") && (currentSubmissionTime.After(lastSubmissionTime.Add(time.Duration(syncPeriod-5) * time.Minute))) {
+								uptimeToday = append(uptimeToday, true)
+								lastSubmissionTimeString = submissionDataToday.CreatedAt
+								continue
+							} else {
+								continue
 							}
 						}
 					}
@@ -129,9 +139,10 @@ func (identity Identity) GetUptime(config AppConfig, sheet *sheets.Service, ctx 
 			}
 		}
 	}
+
 	// If the current time is more than the execution interval than it means that submissions from pervious buckets have to be checked
 	if SubmissionsInMultipleBuckets(currentTime, executionInterval) {
-
+		fmt.Println("Entered multiple buckets")
 		yesterdaysDate := lastExecutionTime.Format("2006-01-02")
 
 		prefixYesterday := strings.Join([]string{ctx.Prefix, "submissions", yesterdaysDate}, "/")
@@ -158,6 +169,7 @@ func (identity Identity) GetUptime(config AppConfig, sheet *sheets.Service, ctx 
 					log.Fatalf("Error parsing time: %v\n", err)
 				}
 
+				fmt.Println("Submission time is: ", submissionTime)
 				if regex.MatchString(*obj.Key) {
 					if submissionTime.After(lastExecutionTime) && submissionTime.Before(currentTime) {
 
@@ -184,46 +196,56 @@ func (identity Identity) GetUptime(config AppConfig, sheet *sheets.Service, ctx 
 
 						if submissionDataYesterday.GraphqlControlPort != 0 {
 							if (identity.publicKey == submissionDataYesterday.Submitter.String()) && (identity.publicIp == submissionDataYesterday.RemoteAddr) && (*identity.graphQLPort == strconv.Itoa(submissionDataYesterday.GraphqlControlPort)) {
-								if lastSubmissionTimeString != "" {
-									lastSubmissionTime, err = time.Parse(time.RFC3339, lastSubmissionTimeString)
-									if err != nil {
-										log.Fatalf("Error parsing time: %v\n", err)
-									}
-								}
 
 								currentSubmissionTime, err := time.Parse(time.RFC3339, submissionDataYesterday.CreatedAt)
 								if err != nil {
 									log.Fatalf("Error parsing time: %v\n", err)
 								}
 
-								if (lastSubmissionTimeString != "") && (currentSubmissionTime.After(lastSubmissionTime.Add(time.Duration(syncPeriod-5) * time.Minute))) && (currentSubmissionTime.Before(lastSubmissionTime.Add(time.Duration(syncPeriod+5) * time.Minute))) {
-									uptimeYesterday = append(uptimeYesterday, true)
-									lastSubmissionTimeString = submissionDataYesterday.CreatedAt
-								} else if lastSubmissionTimeString == "" {
-									uptimeYesterday = append(uptimeYesterday, true)
-									lastSubmissionTimeString = submissionDataYesterday.CreatedAt
-								}
-							}
-						} else {
-							if (identity.publicKey == submissionDataYesterday.Submitter.String()) && (identity.publicIp == submissionDataYesterday.RemoteAddr) {
 								if lastSubmissionTimeString != "" {
 									lastSubmissionTime, err = time.Parse(time.RFC3339, lastSubmissionTimeString)
 									if err != nil {
 										log.Fatalf("Error parsing time: %v\n", err)
 									}
+								} else {
+									uptimeYesterday = append(uptimeYesterday, true)
+									lastSubmissionTimeString = submissionDataYesterday.CreatedAt
+									continue
+								}
 
-									currentSubmissionTime, err := time.Parse(time.RFC3339, submissionDataToday.CreatedAt)
+								if (lastSubmissionTimeString != "") && (currentSubmissionTime.After(lastSubmissionTime.Add(time.Duration(syncPeriod-5) * time.Minute))) {
+									uptimeYesterday = append(uptimeYesterday, true)
+									lastSubmissionTimeString = submissionDataYesterday.CreatedAt
+									continue
+								} else {
+									continue
+								}
+							}
+						} else {
+							if (identity.publicKey == submissionDataYesterday.Submitter.String()) && (identity.publicIp == submissionDataYesterday.RemoteAddr) {
+
+								currentSubmissionTime, err := time.Parse(time.RFC3339, submissionDataYesterday.CreatedAt)
+								if err != nil {
+									log.Fatalf("Error parsing time: %v\n", err)
+								}
+
+								if lastSubmissionTimeString != "" {
+									lastSubmissionTime, err = time.Parse(time.RFC3339, lastSubmissionTimeString)
 									if err != nil {
 										log.Fatalf("Error parsing time: %v\n", err)
 									}
+								} else {
+									uptimeYesterday = append(uptimeYesterday, true)
+									lastSubmissionTimeString = submissionDataYesterday.CreatedAt
+									continue
+								}
 
-									if (lastSubmissionTimeString != "") && (currentSubmissionTime.After(lastSubmissionTime.Add(time.Duration(syncPeriod-5) * time.Minute))) && (currentSubmissionTime.Before(lastSubmissionTime.Add(time.Duration(syncPeriod+5) * time.Minute))) {
-										uptimeYesterday = append(uptimeYesterday, true)
-										lastSubmissionTimeString = submissionDataYesterday.CreatedAt
-									} else if lastSubmissionTimeString == "" {
-										uptimeYesterday = append(uptimeYesterday, true)
-										lastSubmissionTimeString = submissionDataYesterday.CreatedAt
-									}
+								if (lastSubmissionTimeString != "") && (currentSubmissionTime.After(lastSubmissionTime.Add(time.Duration(syncPeriod-5) * time.Minute))) {
+									uptimeYesterday = append(uptimeYesterday, true)
+									lastSubmissionTimeString = submissionDataYesterday.CreatedAt
+									continue
+								} else {
+									continue
 								}
 							}
 						}
@@ -233,9 +255,15 @@ func (identity Identity) GetUptime(config AppConfig, sheet *sheets.Service, ctx 
 		}
 	}
 
+	fmt.Println("Uptime score sum: ", len(uptimeToday)+len(uptimeYesterday))
+	fmt.Println("Number of submissions needed: ", numberOfSubmissionsNeeded)
 	uptimePercent := (float64(len(uptimeToday)+len(uptimeYesterday)) / float64(numberOfSubmissionsNeeded)) * 100
+	fmt.Println("Uptime percent: ", uptimePercent)
+
 	if uptimePercent > 100.00 {
 		uptimePercent = 100.00
 	}
-	identity.uptime = strconv.FormatFloat(uptimePercent, 'f', 2, 64)
+	uptimePercentString := strconv.FormatFloat(uptimePercent, 'f', 2, 64)
+	fmt.Println(uptimePercentString)
+	*identity.uptime = uptimePercentString
 }

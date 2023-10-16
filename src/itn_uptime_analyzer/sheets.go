@@ -26,7 +26,7 @@ func (identity Identity) GetCell(config AppConfig, client *sheets.Service, log *
 		log.Fatalf("Unable to retrieve data from sheet: %v", err)
 	}
 
-	if *identity.graphQLPort != "" {
+	if identity.graphQLPort != nil {
 		identityString = strings.Join([]string{identity.publicKey, identity.publicIp, *identity.graphQLPort}, "-")
 	} else {
 		identityString = strings.Join([]string{identity.publicKey, identity.publicIp}, "-")
@@ -60,7 +60,7 @@ func (identity Identity) AppendNext(config AppConfig, client *sheets.Service, lo
 	spId := config.AnalyzerOutputGsheetId
 	var identityString string
 
-	if *identity.graphQLPort != "" {
+	if identity.graphQLPort != nil {
 		identityString = strings.Join([]string{identity.publicKey, identity.publicIp, *identity.graphQLPort}, "-")
 	} else {
 		identityString = strings.Join([]string{identity.publicKey, identity.publicIp}, "-")
@@ -85,7 +85,7 @@ func (identity Identity) InsertBelow(config AppConfig, client *sheets.Service, l
 	spId := config.AnalyzerOutputGsheetId
 	var identityString string
 
-	if *identity.graphQLPort != "" {
+	if identity.graphQLPort != nil {
 		identityString = strings.Join([]string{identity.publicKey, identity.publicIp, *identity.graphQLPort}, "-")
 	} else {
 		identityString = strings.Join([]string{identity.publicKey, identity.publicIp}, "-")
@@ -115,10 +115,8 @@ func (identity Identity) AppendUptime(config AppConfig, client *sheets.Service, 
 
 	var nextEmptyColumn int = len(resp.Values[0])
 
-	updateRange := fmt.Sprintf("%s!%s%d", sheetTitle, string(nextEmptyColumn+65), rowIndex)
-
-	cellValue := []interface{}{strings.Join([]string{identity.uptime, "%"}, "")}
-
+	updateRange := fmt.Sprintf("%s!%s%d", sheetTitle, string(nextEmptyColumn+LETTER_A_ASCII_CODE), rowIndex)
+	cellValue := []interface{}{strings.Join([]string{*identity.uptime, "%"}, "")}
 	valueRange := sheets.ValueRange{
 		Values: [][]interface{}{cellValue},
 	}
@@ -197,7 +195,7 @@ func MarkExecution(config AppConfig, client *sheets.Service, log *logging.ZapEve
 
 	var nextEmptyColumn int = len(resp.Values[0])
 
-	updateRange := fmt.Sprintf("%s!%s%d", sheetTitle, string(nextEmptyColumn+65), 1)
+	updateRange := fmt.Sprintf("%s!%s%d", sheetTitle, string(nextEmptyColumn+LETTER_A_ASCII_CODE), 1)
 
 	cellValue := []interface{}{timeInterval}
 
