@@ -3,7 +3,6 @@ package itn_uptime_analyzer
 import (
 	dg "block_producers_uptime/delegation_backend"
 	"encoding/json"
-	"fmt"
 	"io"
 	"regexp"
 	"strconv"
@@ -55,7 +54,6 @@ func (identity Identity) GetUptime(config AppConfig, sheet *sheets.Service, ctx 
 			if err != nil {
 				log.Fatalf("Error parsing time: %v\n", err)
 			}
-			fmt.Println("Submission time is: ", submissionTime)
 			//Open json file only if the pubkey matches the pubkey in the name
 			if regex.MatchString(*obj.Key) {
 				if (submissionTime.After(lastExecutionTime)) && (submissionTime.Before(currentTime)) {
@@ -142,7 +140,6 @@ func (identity Identity) GetUptime(config AppConfig, sheet *sheets.Service, ctx 
 
 	// If the current time is more than the execution interval than it means that submissions from pervious buckets have to be checked
 	if SubmissionsInMultipleBuckets(currentTime, executionInterval) {
-		fmt.Println("Entered multiple buckets")
 		yesterdaysDate := lastExecutionTime.Format("2006-01-02")
 
 		prefixYesterday := strings.Join([]string{ctx.Prefix, "submissions", yesterdaysDate}, "/")
@@ -169,7 +166,6 @@ func (identity Identity) GetUptime(config AppConfig, sheet *sheets.Service, ctx 
 					log.Fatalf("Error parsing time: %v\n", err)
 				}
 
-				fmt.Println("Submission time is: ", submissionTime)
 				if regex.MatchString(*obj.Key) {
 					if submissionTime.After(lastExecutionTime) && submissionTime.Before(currentTime) {
 
@@ -255,15 +251,11 @@ func (identity Identity) GetUptime(config AppConfig, sheet *sheets.Service, ctx 
 		}
 	}
 
-	fmt.Println("Uptime score sum: ", len(uptimeToday)+len(uptimeYesterday))
-	fmt.Println("Number of submissions needed: ", numberOfSubmissionsNeeded)
 	uptimePercent := (float64(len(uptimeToday)+len(uptimeYesterday)) / float64(numberOfSubmissionsNeeded)) * 100
-	fmt.Println("Uptime percent: ", uptimePercent)
 
 	if uptimePercent > 100.00 {
 		uptimePercent = 100.00
 	}
 	uptimePercentString := strconv.FormatFloat(uptimePercent, 'f', 2, 64)
-	fmt.Println(uptimePercentString)
 	*identity.uptime = uptimePercentString
 }
