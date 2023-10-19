@@ -4,12 +4,12 @@ import (
 	dg "block_producers_uptime/delegation_backend"
 	itn "block_producers_uptime/itn_uptime_analyzer"
 	"context"
+	"fmt"
 
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go/aws"
 	logging "github.com/ipfs/go-log/v2"
-	"google.golang.org/api/sheets/v4"
 )
 
 func main() {
@@ -53,37 +53,11 @@ func main() {
 
 	// Create Google Cloud client
 
-	sheetsService, err := sheets.NewService(ctx)
-	if err != nil {
-		log.Fatalf("Error creating Sheets service: %v\n", err)
-	}
-
-	sheetTitle, err := itn.IdentifyWeek(appCfg, sheetsService, log, currentTime)
-	if err != nil {
-		log.Fatalf("Error identifying week: %v\n", err)
-	}
-
-	identities := itn.CreateIdentities(appCfg, sheetsService, awsctx, log, sheetTitle, currentTime, executionInterval)
+	identities := itn.CreateIdentities(appCfg, awsctx, log, currentTime, executionInterval)
 
 	// Go over identities and calculate uptime
 	for _, identity := range identities {
-		identity.GetUptime(appCfg, sheetsService, awsctx, log, sheetTitle, currentTime, syncPeriod, executionInterval)
-
-		exactMatch, rowIndex, firstEmptyRow := identity.GetCell(appCfg, sheetsService, log, sheetTitle)
-
-		// Decide where to insert the calculated uptime
-		if exactMatch {
-			identity.AppendUptime(appCfg, sheetsService, log, sheetTitle, rowIndex)
-		} else if rowIndex == 0 {
-			identity.AppendNext(appCfg, sheetsService, log, sheetTitle)
-			identity.AppendUptime(appCfg, sheetsService, log, sheetTitle, firstEmptyRow)
-		} else {
-			identity.InsertBelow(appCfg, sheetsService, log, sheetTitle, rowIndex)
-			identity.AppendUptime(appCfg, sheetsService, log, sheetTitle, rowIndex+1)
-		}
+		identity.GetUptime(appCfg, awsctx, log, currentTime, syncPeriod, executionInterval)
+		fmt.Print(identity)
 	}
-
-	// Mark the execution of the script with a timestamp
-	itn.MarkExecution(appCfg, sheetsService, log, sheetTitle, currentTime, executionInterval)
-
 }

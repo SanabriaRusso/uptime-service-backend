@@ -61,6 +61,41 @@ func GetLastExecutionTime(config AppConfig, client *sheets.Service, log *logging
 	}
 }
 
+// If it's before noon, we check the interval between noon and midnight yesterday.
+// Otherwise we check between midnight and noon today.
+func GetExecutionInterval(currentTime time.Time) (time.Time, time.Time) {
+	startDay := currentTime.Day()
+	startHour := 0
+	endHour := 12
+	if currentTime.Hour() < 12 {
+		startDay = currentTime.Day() - 1
+		startHour = 12
+		endHour = 0
+	}
+
+	periodStart := time.Date(
+		currentTime.Year(),
+		currentTime.Month(),
+		startDay,
+		startHour,
+		0,
+		0,
+		0,
+		currentTime.Location())
+
+	periodEnd := time.Date(
+		currentTime.Year(),
+		currentTime.Month(),
+		currentTime.Day(),
+		endHour,
+		0,
+		0,
+		0,
+		currentTime.Location())
+
+	return periodStart, periodEnd
+}
+
 // Identifies which sheet should the application write to
 // Currently one sheet should represent one week
 func IdentifyWeek(config AppConfig, client *sheets.Service, log *logging.ZapEventLogger, currentTime time.Time) (string, error) {

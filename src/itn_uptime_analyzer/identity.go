@@ -13,7 +13,6 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	logging "github.com/ipfs/go-log/v2"
-	sheets "google.golang.org/api/sheets/v4"
 )
 
 // The graphQLPort parameter should be optional but Golang doesn't permit that
@@ -35,10 +34,10 @@ func IsIdentityInArray(id string, identities []Identity) bool {
 
 // Goes through each submission and adds an identity type to a map
 // Identity is constructed based on the payload that the BP sends which may hold pubkey, ip address and graphqlport
-func CreateIdentities(config AppConfig, sheet *sheets.Service, ctx dg.AwsContext, log *logging.ZapEventLogger, sheetTitle string, currentTime time.Time, executionInterval int) []Identity {
+func CreateIdentities(config AppConfig, ctx dg.AwsContext, log *logging.ZapEventLogger, currentTime time.Time, executionInterval int) []Identity {
 
 	currentDate := currentTime.Format("2006-01-02")
-	lastExecutionTime := GetLastExecutionTime(config, sheet, log, sheetTitle, currentTime, executionInterval)
+	periodStart, periodEnd := GetExecutionInterval(currentTime)
 
 	prefixCurrent := strings.Join([]string{ctx.Prefix, "submissions", currentDate}, "/")
 
@@ -67,7 +66,7 @@ func CreateIdentities(config AppConfig, sheet *sheets.Service, ctx dg.AwsContext
 				log.Fatalf("Error parsing time: %v\n", err)
 			}
 
-			if (submissionTime.After(lastExecutionTime)) && (submissionTime.Before(currentTime)) {
+			if (submissionTime.After(periodStart)) && (submissionTime.Before(periodEnd)) {
 
 				var identity Identity
 
