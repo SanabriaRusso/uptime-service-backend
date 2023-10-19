@@ -2,6 +2,9 @@
 bazel-*
 user.bazelrc
 
+# direnv config
+.envrc
+
 # make stuff
 result/
 
