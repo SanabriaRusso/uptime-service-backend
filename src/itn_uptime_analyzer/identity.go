@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"fmt"
 
 	dg "block_producers_uptime/delegation_backend"
 
@@ -18,8 +19,8 @@ import (
 // The graphQLPort parameter should be optional but Golang doesn't permit that
 // As a workaround we use a pointer that can be defined as nil
 type Identity struct {
-	id, publicKey, publicIp string
-	graphQLPort, uptime     *string
+	id, PublicKey, PublicIp string
+	graphQLPort, Uptime     *string
 }
 
 // Custom function to check if identity is in array
@@ -36,10 +37,10 @@ func IsIdentityInArray(id string, identities []Identity) bool {
 // Identity is constructed based on the payload that the BP sends which may hold pubkey, ip address and graphqlport
 func CreateIdentities(config AppConfig, ctx dg.AwsContext, log *logging.ZapEventLogger, currentTime time.Time, executionInterval int) []Identity {
 
-	currentDate := currentTime.Format("2006-01-02")
 	periodStart, periodEnd := GetExecutionInterval(currentTime)
+	day := periodStart.Format("2006-01-02")
 
-	prefixCurrent := strings.Join([]string{ctx.Prefix, "submissions", currentDate}, "/")
+	prefixCurrent := strings.Join([]string{ctx.Prefix, "submissions", day}, "/")
 
 	var identities []Identity // Create an empty array of Identity types
 
@@ -52,8 +53,8 @@ func CreateIdentities(config AppConfig, ctx dg.AwsContext, log *logging.ZapEvent
 
 	// Paginate through ListObjects results
 
+	log.Infof("Getting identities from %v...\n", prefixCurrent)
 	paginator := s3.NewListObjectsV2Paginator(ctx.Client, input)
-
 	for paginator.HasMorePages() {
 		page, err := paginator.NextPage(ctx.Context)
 		if err != nil {
@@ -61,7 +62,7 @@ func CreateIdentities(config AppConfig, ctx dg.AwsContext, log *logging.ZapEvent
 		}
 
 		for _, obj := range page.Contents {
-			submissionTime, err := time.Parse(time.RFC3339, (*obj.Key)[32:52]) // Between characters 32 and 52 lies the timestamp of a submission
+			submissionTime, err := GetSubmissionTime(*obj.Key)
 			if err != nil {
 				log.Fatalf("Error parsing time: %v\n", err)
 			}
@@ -90,7 +91,7 @@ func CreateIdentities(config AppConfig, ctx dg.AwsContext, log *logging.ZapEvent
 				if err != nil {
 					log.Fatalf("Error unmarshaling bucket content: %v\n", err)
 				}
-
+				
 				if submissionData.GraphqlControlPort != 0 {
 					identity = GetFullIdentity(submissionData.Submitter.String(), submissionData.RemoteAddr, strconv.Itoa(submissionData.GraphqlControlPort))
 				} else {
@@ -114,9 +115,9 @@ func GetFullIdentity(pubKey string, ip string, graphqlPort string) Identity {
 
 	identity := Identity{
 		id:          hex.EncodeToString(id[:]),
-		publicKey:   pubKey,
-		publicIp:    ip,
-		uptime:      new(string),
+		PublicKey:   pubKey,
+		PublicIp:    ip,
+		Uptime:      new(string),
 		graphQLPort: &graphqlPort,
 	}
 
@@ -131,9 +132,9 @@ func GetPartialIdentity(pubKey string, ip string) Identity {
 
 	identity := Identity{
 		id:        hex.EncodeToString(id[:]),
-		publicKey: pubKey,
-		publicIp:  ip,
-		uptime:    new(string),
+		PublicKey: pubKey,
+		PublicIp:  ip,
+		Uptime:    new(string),
 	}
 
 	return identity

@@ -48,11 +48,6 @@ func LoadEnv(log logging.EventLogger) AppConfig {
 			log.Fatal("missing NETWORK_NAME environment variable")
 		}
 
-		gsheetId := os.Getenv("CONFIG_GSHEET_ID")
-		if gsheetId == "" {
-			log.Fatal("missing GSHEET_ID environment variable")
-		}
-
 		awsRegion := os.Getenv("CONFIG_AWS_REGION")
 		if awsRegion == "" {
 			log.Fatal("missing AWS_REGION environment variable")
@@ -63,15 +58,8 @@ func LoadEnv(log logging.EventLogger) AppConfig {
 			log.Fatal("missing AWS_ACCOUNT_ID environment variable")
 		}
 
-		outputGsheetId := os.Getenv("CONFIG_ANALYZER_OUTPUT_GSHEET_ID")
-		if outputGsheetId == "" {
-			log.Fatal("missing ANALYZER_OUTPUT_GSHEET_ID environment variable")
-		}
-
 		config = AppConfig{
 			NetworkName:            networkName,
-			GsheetId:               gsheetId,
-			AnalyzerOutputGsheetId: outputGsheetId,
 			Aws: AwsConfig{
 				Region:    awsRegion,
 				AccountId: awsAccountId,
@@ -95,8 +83,6 @@ type AwsConfig struct {
 type AppConfig struct {
 	Aws                    AwsConfig `json:"aws"`
 	NetworkName            string    `json:"network_name"`
-	GsheetId               string    `json:"gsheet_id"`
-	AnalyzerOutputGsheetId string    `json:"analyzer_output_gsheet_id"`
 }
 
 type AwsCredentials struct {

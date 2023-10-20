@@ -55,9 +55,12 @@ func main() {
 
 	identities := itn.CreateIdentities(appCfg, awsctx, log, currentTime, executionInterval)
 
+	periodStart, periodEnd := itn.GetExecutionInterval(currentTime)
+	fmt.Printf("Results between %v and %v\n", periodStart, periodEnd)
+	fmt.Printf("public key; public ip; uptime\n")
 	// Go over identities and calculate uptime
 	for _, identity := range identities {
 		identity.GetUptime(appCfg, awsctx, log, currentTime, syncPeriod, executionInterval)
-		fmt.Print(identity)
+		fmt.Printf("%s; %s; %s\n", identity.PublicKey, identity.PublicIp, *identity.Uptime)
 	}
 }

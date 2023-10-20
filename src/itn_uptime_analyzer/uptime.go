@@ -15,12 +15,12 @@ import (
 
 // This function calculates the difference between the time elapsed today and the execution interval, decides if it need to check multiple buckets or not and calculates the uptime
 func (identity Identity) GetUptime(config AppConfig, ctx dg.AwsContext, log *logging.ZapEventLogger, currentTime time.Time, syncPeriod int, executionInterval int) {
-	currentDate := currentTime.Format("2006-01-02")
 
 	periodStart, periodEnd := GetExecutionInterval(currentTime)
+	day := periodStart.Format("2006-01-02")
 	numberOfSubmissionsNeeded := (60 / syncPeriod) * executionInterval
 
-	prefixToday := strings.Join([]string{ctx.Prefix, "submissions", currentDate}, "/")
+	prefixToday := strings.Join([]string{ctx.Prefix, "submissions", day}, "/")
 
 	inputToday := &s3.ListObjectsV2Input{
 		Bucket: ctx.BucketName,
@@ -28,7 +28,7 @@ func (identity Identity) GetUptime(config AppConfig, ctx dg.AwsContext, log *log
 	}
 
 	//Create a regex pattern for finding submissions matching identity pubkey
-	regex, err := regexp.Compile(strings.Join([]string{".*-", identity.publicKey, ".json"}, ""))
+	regex, err := regexp.Compile(strings.Join([]string{".*-", identity.PublicKey, ".json"}, ""))
 	if err != nil {
 		log.Fatalf("Error creating regular expression out of key: %v\n", err)
 	}
@@ -49,7 +49,7 @@ func (identity Identity) GetUptime(config AppConfig, ctx dg.AwsContext, log *log
 
 		for _, obj := range page.Contents {
 
-			submissionTime, err := time.Parse(time.RFC3339, (*obj.Key)[32:52])
+			submissionTime, err := GetSubmissionTime(*obj.Key)
 			if err != nil {
 				log.Fatalf("Error parsing time: %v\n", err)
 			}
@@ -79,7 +79,7 @@ func (identity Identity) GetUptime(config AppConfig, ctx dg.AwsContext, log *log
 					}
 
 					if submissionDataToday.GraphqlControlPort != 0 {
-						if (identity.publicKey == submissionDataToday.Submitter.String()) && (identity.publicIp == submissionDataToday.RemoteAddr) && (*identity.graphQLPort == strconv.Itoa(submissionDataToday.GraphqlControlPort)) {
+						if (identity.PublicKey == submissionDataToday.Submitter.String()) && (identity.PublicIp == submissionDataToday.RemoteAddr) && (*identity.graphQLPort == strconv.Itoa(submissionDataToday.GraphqlControlPort)) {
 
 							currentSubmissionTime, err := time.Parse(time.RFC3339, submissionDataToday.CreatedAt)
 							if err != nil {
@@ -106,7 +106,7 @@ func (identity Identity) GetUptime(config AppConfig, ctx dg.AwsContext, log *log
 							}
 						}
 					} else {
-						if (identity.publicKey == submissionDataToday.Submitter.String()) && (identity.publicIp == submissionDataToday.RemoteAddr) {
+						if (identity.PublicKey == submissionDataToday.Submitter.String()) && (identity.PublicIp == submissionDataToday.RemoteAddr) {
 
 							currentSubmissionTime, err := time.Parse(time.RFC3339, submissionDataToday.CreatedAt)
 							if err != nil {
@@ -143,5 +143,5 @@ func (identity Identity) GetUptime(config AppConfig, ctx dg.AwsContext, log *log
 		uptimePercent = 100.00
 	}
 	uptimePercentString := strconv.FormatFloat(uptimePercent, 'f', 2, 64)
-	*identity.uptime = uptimePercentString
+	*identity.Uptime = uptimePercentString
 }
