@@ -39,4 +39,6 @@ jobs:
       run: nix-shell --run "make docker"
 
     - name: 🧪 Run Integration Tests
+      env:
+        UPTIME_SERVICE_SECRET: ${{ secrets.UPTIME_SERVICE_SECRET }}
       run: nix-shell --run "make integration-test"
