@@ -7,7 +7,7 @@ import (
 )
 
 const (
-	TEST_DATA_FOLDER = "../../test/data/integration"
+	TEST_DATA_FOLDER = "../../test/integration"
 
 	GENESIS_FILE  = TEST_DATA_FOLDER + "/topology/genesis_ledger.json"
 	TOPOLOGY_FILE = TEST_DATA_FOLDER + "/topology/topology.json"

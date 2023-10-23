@@ -8,7 +8,7 @@
         "worker_nodes": 1,
         "snark_worker_fee": "0.0001",
         "libp2p_pass": "naughty blue worm",
-        "libp2p_keyfile": "../../test/data/integration/topology/libp2p_keys/snark-node.json",
+        "libp2p_keyfile": "../../test/integration/topology/libp2p_keys/snark-node.json",
         "libp2p_keypair": {
             "box_primitive": "xsalsa20poly1305",
             "pw_primitive": "argon2i",
@@ -25,12 +25,12 @@
     "node-a": {
         "pk": "B62qoEykaCCyw6JtF3EM4S33FpCon5F4HiZbgby5oPSgpVQ6MYYfxPC",
         "sk": "EKF83r3ibZ8eCC1PwcgrTAVLVoA3dKXt2iSGxb6vDnofs9nKUY3V",
-        "privkey_path": "../../test/data/integration/topology/block_producer_keys/node-a.json",
+        "privkey_path": "../../test/integration/topology/block_producer_keys/node-a.json",
         "role": "Block_producer",
         "docker_image": "gcr.io/o1labs-192920/mina-daemon:2.0.0rampup5-55b7818-bullseye-berkeley",
         "git_build": null,
         "libp2p_pass": "naughty blue worm",
-        "libp2p_keyfile": "../../test/data/integration/topology/libp2p_keys/node-a.json",
+        "libp2p_keyfile": "../../test/integration/topology/libp2p_keys/node-a.json",
         "libp2p_keypair": {
             "box_primitive": "xsalsa20poly1305",
             "pw_primitive": "argon2i",
@@ -47,12 +47,12 @@
     "node-b": {
         "pk": "B62qiZv3JwF9wRGtqhNbLsfWMm6zYd71RD6Akfq9AUK8MY4EC5Ye9i6",
         "sk": "EKF5AkJQX1B6CgmmaXgsyw4tZFp1M27TRcJrzw67Mtnp7o45rEvv",
-        "privkey_path": "../../test/data/integration/topology/block_producer_keys/node-b.json",
+        "privkey_path": "../../test/integration/topology/block_producer_keys/node-b.json",
         "role": "Block_producer",
         "docker_image": "gcr.io/o1labs-192920/mina-daemon:2.0.0rampup5-55b7818-bullseye-berkeley",
         "git_build": null,
         "libp2p_pass": "naughty blue worm",
-        "libp2p_keyfile": "../../test/data/integration/topology/libp2p_keys/node-b.json",
+        "libp2p_keyfile": "../../test/integration/topology/libp2p_keys/node-b.json",
         "libp2p_keypair": {
             "box_primitive": "xsalsa20poly1305",
             "pw_primitive": "argon2i",
@@ -69,12 +69,12 @@
     "node-c": {
         "pk": "B62qoztWpP8cJbknVWCcW2u56Y44wLNqpsompb5dDGoG1o6nfeatTKX",
         "sk": "EKF44LaJVQKTT1iuSJ3XifSFFtBndMb741kHPzVcYAtYEyJbZ11s",
-        "privkey_path": "../../test/data/integration/topology/block_producer_keys/node-c.json",
+        "privkey_path": "../../test/integration/topology/block_producer_keys/node-c.json",
         "role": "Block_producer",
         "docker_image": "gcr.io/o1labs-192920/mina-daemon:2.0.0rampup5-55b7818-bullseye-berkeley",
         "git_build": null,
         "libp2p_pass": "naughty blue worm",
-        "libp2p_keyfile": "../../test/data/integration/topology/libp2p_keys/node-c.json",
+        "libp2p_keyfile": "../../test/integration/topology/libp2p_keys/node-c.json",
         "libp2p_keypair": {
             "box_primitive": "xsalsa20poly1305",
             "pw_primitive": "argon2i",
@@ -90,9 +90,9 @@
     },
     "uptime-service-backend": {
         "role": "Uptime_service_backend",
-        "app_config_path": "../../test/data/integration/topology/uptime_service_config/app_config.json",
-        "aws_credentials_path": "../../test/data/integration/topology/uptime_service_config/aws_creds.json",
-        "minasheets_path": "../../test/data/integration/topology/uptime_service_config/minasheets.json",
+        "app_config_path": "../../test/integration/topology/uptime_service_config/app_config.json",
+        "aws_credentials_path": "../../test/integration/topology/uptime_service_config/aws_creds.json",
+        "minasheets_path": "../../test/integration/topology/uptime_service_config/minasheets.json",
         "docker_image": "uptime-service-backend:integration-test"
     },
     "default-seed": {
@@ -103,7 +103,7 @@
         "docker_image": "gcr.io/o1labs-192920/mina-daemon:2.0.0rampup5-55b7818-bullseye-berkeley",
         "git_build": null,
         "libp2p_pass": "naughty blue worm",
-        "libp2p_keyfile": "../../test/data/integration/topology/libp2p_keys/default-seed.json",
+        "libp2p_keyfile": "../../test/integration/topology/libp2p_keys/default-seed.json",
         "libp2p_keypair": {
             "box_primitive": "xsalsa20poly1305",
             "pw_primitive": "argon2i",
