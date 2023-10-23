@@ -36,7 +36,7 @@ jobs:
     - name: 🛠️ Build Docker
       env:
         IMAGE_NAME: uptime-service-backend
-        TAG: integtation-test
+        TAG: integration-test
       run: nix-shell --run "make docker"
 
     - name: 🧪 Run Integration Tests
