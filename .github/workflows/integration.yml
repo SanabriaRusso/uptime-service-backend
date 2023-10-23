@@ -33,18 +33,10 @@ jobs:
       with:
         stream: stable
 
-    - name: Test Minimina
-      run: |
-        minimina network create
-        minimina network start
-        sleep 10
-        minimina network status
-        minimina network info
-        minimina network stop
-        minimina network delete
+    - name: 🛠️ Build Docker
+      env:
+        TAG: integtation-test
+      run: nix-shell --run "make docker"
 
-    # - name: 🛠️ Build Docker
-    #   env:
-    #     TAG: integtation-test
-    #   run: nix-shell --run "make docker"
-
+    - name: 🧪 Run Integration Tests
+      run: nix-shell --run "make integration-test"
