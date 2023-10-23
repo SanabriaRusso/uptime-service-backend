@@ -25,6 +25,10 @@ case "$1" in
     cd src/delegation_backend
     LD_LIBRARY_PATH="$OUT" $GO test
     ;;
+  integration-test)
+    cd src/integration_tests
+    $GO test -v
+    ;;
   docker)
     if [[ "$TAG" == "" ]]; then
       echo "Specify TAG env variable."
