@@ -71,6 +71,7 @@ func LoadEnv(log logging.EventLogger) AppConfig {
         var start *time.Time
         var end *time.Time
 		var interval *time.Duration
+		var ignoreIPs bool
 
 		networkName := os.Getenv("CONFIG_NETWORK_NAME")
 		if networkName == "" {
@@ -85,6 +86,13 @@ func LoadEnv(log logging.EventLogger) AppConfig {
 		awsAccountId := os.Getenv("CONFIG_AWS_ACCOUNT_ID")
 		if awsAccountId == "" {
 			log.Fatal("missing AWS_ACCOUNT_ID environment variable")
+		}
+
+		ignoreIPsRaw := os.Getenv("CONFIG_IGNORE_IPS")
+		if ignoreIPsRaw == "" {
+			ignoreIPs = false
+		} else {
+			ignoreIPs = true
 		}
 
 	    startRaw := os.Getenv("CONFIG_PERIOD_START")
@@ -129,6 +137,7 @@ func LoadEnv(log logging.EventLogger) AppConfig {
 				AccountId: awsAccountId,
 			},
 			Period: period,
+			IgnoreIPs: ignoreIPs,
 		}
 	}
 
@@ -149,6 +158,7 @@ type AppConfig struct {
 	Aws                    AwsConfig      `json:"aws"`
 	NetworkName            string         `json:"network_name"`
 	Period                 PeriodConfig   `json:"period"`
+	IgnoreIPs              bool           `json:"ignore_ips"`
 }
 
 type AwsCredentials struct {

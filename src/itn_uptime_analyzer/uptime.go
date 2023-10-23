@@ -77,8 +77,15 @@ func (identity Identity) GetUptime(config AppConfig, ctx dg.AwsContext, log *log
 						log.Fatalf("Error unmarshaling bucket content: %v\n", err)
 					}
 
+					var remoteAddr string
+					if config.IgnoreIPs {
+						remoteAddr = ""
+					} else {
+						remoteAddr = submissionDataToday.RemoteAddr
+					}
+
 					if submissionDataToday.GraphqlControlPort != 0 {
-						if (identity.PublicKey == submissionDataToday.Submitter.String()) && (identity.PublicIp == submissionDataToday.RemoteAddr) && (*identity.graphQLPort == strconv.Itoa(submissionDataToday.GraphqlControlPort)) {
+						if (identity.PublicKey == submissionDataToday.Submitter.String()) && (identity.PublicIp == remoteAddr) && (*identity.graphQLPort == strconv.Itoa(submissionDataToday.GraphqlControlPort)) {
 
 							currentSubmissionTime, err := time.Parse(time.RFC3339, submissionDataToday.CreatedAt)
 							if err != nil {
@@ -105,7 +112,7 @@ func (identity Identity) GetUptime(config AppConfig, ctx dg.AwsContext, log *log
 							}
 						}
 					} else {
-						if (identity.PublicKey == submissionDataToday.Submitter.String()) && (identity.PublicIp == submissionDataToday.RemoteAddr) {
+						if (identity.PublicKey == submissionDataToday.Submitter.String()) && (identity.PublicIp == remoteAddr) {
 
 							currentSubmissionTime, err := time.Parse(time.RFC3339, submissionDataToday.CreatedAt)
 							if err != nil {

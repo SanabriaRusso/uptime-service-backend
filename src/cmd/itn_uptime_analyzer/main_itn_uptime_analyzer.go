@@ -46,10 +46,18 @@ func main() {
 	fmt.Printf("Results between %v and %v (interval of %v)\n", appCfg.Period.Start, appCfg.Period.End, appCfg.Period.Interval)
 	identities := itn.CreateIdentities(appCfg, awsctx, log)
 
-	fmt.Printf("public key; public ip; uptime\n")
+	if appCfg.IgnoreIPs {
+		fmt.Printf("public key; uptime\n")
+	} else {
+		fmt.Printf("public key; public ip; uptime\n")
+	}
 	// Go over identities and calculate uptime
 	for _, identity := range identities {
 		identity.GetUptime(appCfg, awsctx, log, syncPeriod)
-		fmt.Printf("%s; %s; %s\n", identity.PublicKey, identity.PublicIp, *identity.Uptime)
+		if appCfg.IgnoreIPs {
+			fmt.Printf("%s; %s\n", identity.PublicKey, *identity.Uptime)
+		} else {
+			fmt.Printf("%s; %s; %s\n", identity.PublicKey, identity.PublicIp, *identity.Uptime)
+		}
 	}
 }

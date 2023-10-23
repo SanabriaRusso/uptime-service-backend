@@ -87,11 +87,18 @@ func CreateIdentities(config AppConfig, ctx dg.AwsContext, log *logging.ZapEvent
 				if err != nil {
 					log.Fatalf("Error unmarshaling bucket content: %v\n", err)
 				}
-				
-				if submissionData.GraphqlControlPort != 0 {
-					identity = GetFullIdentity(submissionData.Submitter.String(), submissionData.RemoteAddr, strconv.Itoa(submissionData.GraphqlControlPort))
+
+				var remoteAddr string
+				if config.IgnoreIPs {
+					remoteAddr = ""
 				} else {
-					identity = GetPartialIdentity(submissionData.Submitter.String(), submissionData.RemoteAddr)
+					remoteAddr = submissionData.RemoteAddr
+				}
+
+				if submissionData.GraphqlControlPort != 0 {
+					identity = GetFullIdentity(submissionData.Submitter.String(), remoteAddr, strconv.Itoa(submissionData.GraphqlControlPort))
+				} else {
+					identity = GetPartialIdentity(submissionData.Submitter.String(), remoteAddr)
 				}
 
 				if !IsIdentityInArray(identity.id, identities) {
