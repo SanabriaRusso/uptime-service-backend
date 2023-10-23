@@ -3,6 +3,8 @@ package itn_uptime_analyzer
 import (
 	"encoding/json"
 	"os"
+	"strconv"
+	"time"
 
 	logging "github.com/ipfs/go-log/v2"
 )
@@ -42,7 +44,34 @@ func LoadEnv(log logging.EventLogger) AppConfig {
 			log.Errorf("Error loading config file: %s", err)
 			os.Exit(1)
 		}
-	} else {
+
+        var start *time.Time
+        var end *time.Time
+		var interval *time.Duration
+
+		// 1st Jan 0001 is the default value, which appears if it is absent
+		// from the config file.
+		if config.Period.End.Year() == 1 {
+			end = nil
+		} else {
+			end = &config.Period.End
+		}
+		if config.Period.Start.Year() == 1 {
+			start = nil
+		} else {
+			start = &config.Period.Start
+		}
+		if config.Period.Interval == 0 {
+			interval = nil
+		} else {
+			interval = &config.Period.Interval
+		}
+		config.Period = GetPeriodConfig(start, end, interval, log)
+    } else {
+        var start *time.Time
+        var end *time.Time
+		var interval *time.Duration
+
 		networkName := os.Getenv("CONFIG_NETWORK_NAME")
 		if networkName == "" {
 			log.Fatal("missing NETWORK_NAME environment variable")
@@ -58,12 +87,48 @@ func LoadEnv(log logging.EventLogger) AppConfig {
 			log.Fatal("missing AWS_ACCOUNT_ID environment variable")
 		}
 
+	    startRaw := os.Getenv("CONFIG_PERIOD_START")
+	    if startRaw == "" {
+			start = nil
+	    } else {
+			startParsed, err := time.Parse(time.RFC3339, startRaw)
+			if err != nil {
+				log.Fatalf("invalid CONFIG_PERIOD_START environment variable (%v)", err)
+			}
+			start = &startParsed
+		}
+
+	    endRaw := os.Getenv("CONFIG_PERIOD_END")
+	    if endRaw == "" {
+			end = nil
+	    } else {
+			endParsed, err := time.Parse(time.RFC3339, endRaw)
+			if err != nil {
+				log.Fatalf("invalid CONFIG_PERIOD_END environment variable (%v)", err)
+			}
+			end = &endParsed
+		}
+
+        intervalRaw := os.Getenv("CONFIG_PERIOD_INTERVAL")
+	    if intervalRaw == "" {
+			interval = nil
+		} else {
+			intervalInt, err := strconv.ParseInt(intervalRaw, 10, 64)
+			if err != nil {
+				log.Fatal("CONFIG_PERIOD_INTERVAL specified, but not an integer (%v)!", err)
+			}
+            intervalParsed := time.Duration(intervalInt)
+			interval = &intervalParsed
+		}
+        period := GetPeriodConfig(start, end, interval, log)
+
 		config = AppConfig{
 			NetworkName:            networkName,
 			Aws: AwsConfig{
 				Region:    awsRegion,
 				AccountId: awsAccountId,
 			},
+			Period: period,
 		}
 	}
 
@@ -72,7 +137,7 @@ func LoadEnv(log logging.EventLogger) AppConfig {
 		loadAwsCredentials(awsCredentialsFile, log)
 	}
 
-	return config
+return config
 }
 
 type AwsConfig struct {
@@ -81,8 +146,9 @@ type AwsConfig struct {
 }
 
 type AppConfig struct {
-	Aws                    AwsConfig `json:"aws"`
-	NetworkName            string    `json:"network_name"`
+	Aws                    AwsConfig      `json:"aws"`
+	NetworkName            string         `json:"network_name"`
+	Period                 PeriodConfig   `json:"period"`
 }
 
 type AwsCredentials struct {

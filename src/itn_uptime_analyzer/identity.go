@@ -7,8 +7,6 @@ import (
 	"io"
 	"strconv"
 	"strings"
-	"time"
-	"fmt"
 
 	dg "block_producers_uptime/delegation_backend"
 
@@ -35,10 +33,9 @@ func IsIdentityInArray(id string, identities []Identity) bool {
 
 // Goes through each submission and adds an identity type to a map
 // Identity is constructed based on the payload that the BP sends which may hold pubkey, ip address and graphqlport
-func CreateIdentities(config AppConfig, ctx dg.AwsContext, log *logging.ZapEventLogger, currentTime time.Time, executionInterval int) []Identity {
+func CreateIdentities(config AppConfig, ctx dg.AwsContext, log *logging.ZapEventLogger) []Identity {
 
-	periodStart, periodEnd := GetExecutionInterval(currentTime)
-	day := periodStart.Format("2006-01-02")
+	day := config.Period.Start.Format("2006-01-02")
 
 	prefixCurrent := strings.Join([]string{ctx.Prefix, "submissions", day}, "/")
 
@@ -53,7 +50,6 @@ func CreateIdentities(config AppConfig, ctx dg.AwsContext, log *logging.ZapEvent
 
 	// Paginate through ListObjects results
 
-	log.Infof("Getting identities from %v...\n", prefixCurrent)
 	paginator := s3.NewListObjectsV2Paginator(ctx.Client, input)
 	for paginator.HasMorePages() {
 		page, err := paginator.NextPage(ctx.Context)
@@ -67,7 +63,7 @@ func CreateIdentities(config AppConfig, ctx dg.AwsContext, log *logging.ZapEvent
 				log.Fatalf("Error parsing time: %v\n", err)
 			}
 
-			if (submissionTime.After(periodStart)) && (submissionTime.Before(periodEnd)) {
+			if (submissionTime.After(config.Period.Start)) && (submissionTime.Before(config.Period.End)) {
 
 				var identity Identity
 

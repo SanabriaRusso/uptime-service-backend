@@ -13,15 +13,8 @@ import (
 )
 
 func main() {
-
-	// Get the time of execution
-	currentTime := itn.GetCurrentTime()
-
 	// Set up sync period of type int representing minutes
 	syncPeriod := 15
-
-	// Set up execution interval type int representing hours
-	executionInterval := 12
 
 	// Setting up logging for application
 	logging.SetupLogging(logging.Config{
@@ -32,7 +25,6 @@ func main() {
 		File:   "",
 	})
 	log := logging.Logger("itn availability script")
-	log.Infof("itn availability script has the following logging subsystems active: %v\n", logging.GetSubsystems())
 
 	// Empty context object and initializing memory for application
 	ctx := context.Background()
@@ -51,16 +43,13 @@ func main() {
 
 	awsctx := dg.AwsContext{Client: client, BucketName: aws.String(itn.GetBucketName(appCfg)), Prefix: appCfg.NetworkName, Context: ctx, Log: log}
 
-	// Create Google Cloud client
+	fmt.Printf("Results between %v and %v (interval of %v)\n", appCfg.Period.Start, appCfg.Period.End, appCfg.Period.Interval)
+	identities := itn.CreateIdentities(appCfg, awsctx, log)
 
-	identities := itn.CreateIdentities(appCfg, awsctx, log, currentTime, executionInterval)
-
-	periodStart, periodEnd := itn.GetExecutionInterval(currentTime)
-	fmt.Printf("Results between %v and %v\n", periodStart, periodEnd)
 	fmt.Printf("public key; public ip; uptime\n")
 	// Go over identities and calculate uptime
 	for _, identity := range identities {
-		identity.GetUptime(appCfg, awsctx, log, currentTime, syncPeriod, executionInterval)
+		identity.GetUptime(appCfg, awsctx, log, syncPeriod)
 		fmt.Printf("%s; %s; %s\n", identity.PublicKey, identity.PublicIp, *identity.Uptime)
 	}
 }

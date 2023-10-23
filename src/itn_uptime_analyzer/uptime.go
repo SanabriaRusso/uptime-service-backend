@@ -14,11 +14,10 @@ import (
 )
 
 // This function calculates the difference between the time elapsed today and the execution interval, decides if it need to check multiple buckets or not and calculates the uptime
-func (identity Identity) GetUptime(config AppConfig, ctx dg.AwsContext, log *logging.ZapEventLogger, currentTime time.Time, syncPeriod int, executionInterval int) {
+func (identity Identity) GetUptime(config AppConfig, ctx dg.AwsContext, log *logging.ZapEventLogger, syncPeriod int) {
 
-	periodStart, periodEnd := GetExecutionInterval(currentTime)
-	day := periodStart.Format("2006-01-02")
-	numberOfSubmissionsNeeded := (60 / syncPeriod) * executionInterval
+	day := config.Period.Start.Format("2006-01-02")
+	numberOfSubmissionsNeeded := (60 / syncPeriod) * int(config.Period.Interval.Hours())
 
 	prefixToday := strings.Join([]string{ctx.Prefix, "submissions", day}, "/")
 
@@ -55,7 +54,7 @@ func (identity Identity) GetUptime(config AppConfig, ctx dg.AwsContext, log *log
 			}
 			//Open json file only if the pubkey matches the pubkey in the name
 			if regex.MatchString(*obj.Key) {
-				if (submissionTime.After(periodStart)) && (submissionTime.Before(periodEnd)) {
+				if (submissionTime.After(config.Period.Start)) && (submissionTime.Before(config.Period.End)) {
 
 					objHandle, err := ctx.Client.GetObject(ctx.Context, &s3.GetObjectInput{
 						Bucket: ctx.BucketName,
