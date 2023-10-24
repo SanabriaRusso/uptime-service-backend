@@ -37,8 +37,7 @@ func (identity Identity) GetUptime(config AppConfig, ctx dg.AwsContext, log *log
     var submissionDataToday dg.MetaToBeSaved
     var lastSubmissionTimeString string
     var lastSubmissionTime time.Time
-    var uptimeToday []bool
-    var uptimeYesterday []bool
+    uptimeToday := 0
 
     for paginatorToday.HasMorePages() {
         page, err := paginatorToday.NextPage(ctx.Context)
@@ -98,13 +97,13 @@ func (identity Identity) GetUptime(config AppConfig, ctx dg.AwsContext, log *log
                                     log.Fatalf("Error parsing time: %v\n", err)
                                 }
                             } else {
-                                uptimeToday = append(uptimeToday, true)
+                                uptimeToday += 1
                                 lastSubmissionTimeString = submissionDataToday.CreatedAt
                                 continue
                             }
 
                             if (lastSubmissionTimeString != "") && (currentSubmissionTime.After(lastSubmissionTime.Add(time.Duration(syncPeriod-5) * time.Minute))) {
-                                uptimeToday = append(uptimeToday, true)
+                                uptimeToday += 1
                                 lastSubmissionTimeString = submissionDataToday.CreatedAt
                                 continue
                             } else {
@@ -124,13 +123,13 @@ func (identity Identity) GetUptime(config AppConfig, ctx dg.AwsContext, log *log
                                     log.Fatalf("Error parsing time: %v\n", err)
                                 }
                             } else {
-                                uptimeToday = append(uptimeToday, true)
+                                uptimeToday += 1
                                 lastSubmissionTimeString = submissionDataToday.CreatedAt
                                 continue
                             }
 
                             if (lastSubmissionTimeString != "") && (currentSubmissionTime.After(lastSubmissionTime.Add(time.Duration(syncPeriod-5) * time.Minute))) {
-                                uptimeToday = append(uptimeToday, true)
+                                uptimeToday += 1
                                 lastSubmissionTimeString = submissionDataToday.CreatedAt
                                 continue
                             } else {
@@ -143,7 +142,7 @@ func (identity Identity) GetUptime(config AppConfig, ctx dg.AwsContext, log *log
         }
     }
 
-    uptimePercent := (float64(len(uptimeToday)+len(uptimeYesterday)) / float64(numberOfSubmissionsNeeded)) * 100
+    uptimePercent := float64(uptimeToday) / float64(numberOfSubmissionsNeeded) * 100
 
     if uptimePercent > 100.00 {
         uptimePercent = 100.00
