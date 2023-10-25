@@ -1,6 +1,7 @@
 # Uptime Service Backend
 
 [![Build](https://github.com/MinaFoundation/uptime-service-backend/actions/workflows/build.yml/badge.svg)](https://github.com/MinaFoundation/uptime-service-backend/actions/workflows/build.yml)
+[![Integration](https://github.com/MinaFoundation/uptime-service-backend/actions/workflows/integration.yml/badge.svg)](https://github.com/MinaFoundation/uptime-service-backend/actions/workflows/integration.yml)
 
 As part of delegation program, nodes are to upload some proof of their activity. These proofs are to be accumulated and utilized for scoring. This service provides the nodes with a way to submit their data for score calculation.
 
@@ -116,9 +117,32 @@ $ nix-shell
 
 ## Testing
 
-To run tests, enter the `nix-shell` and use the `make test` command:
+To run unit tests, enter the `nix-shell` and use the `make test` command:
 
 ```bash
 $ nix-shell
 [nix-shell]$ make test
 ```
+
+To execute the integration tests, you will need the `UPTIME_SERVICE_SECRET` passphrase. This is essential to decrypt the uptime service configuration files.
+
+### Steps to run integration tests
+ 
+1. **Build the Docker Image**:
+
+    ```bash
+    $ nix-shell
+    [nix-shell]$ export IMAGE_NAME=uptime-service-backend
+    [nix-shell]$ export TAG=integration-test
+    [nix-shell]$ make docker 
+    ```
+
+2. **Run the Integration Tests**:
+
+    ```bash
+    $ nix-shell
+    [nix-shell]$ export UPTIME_SERVICE_SECRET=YOUR_SECRET_HERE
+    [nix-shell]$ make integration-test 
+    ```
+
+> **Note:** Replace `YOUR_SECRET_HERE` with the appropriate value for `UPTIME_SERVICE_SECRET`.

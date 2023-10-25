@@ -25,12 +25,18 @@ case "$1" in
     cd src/delegation_backend
     LD_LIBRARY_PATH="$OUT" $GO test
     ;;
+  integration-test)
+    cd src/integration_tests
+    $GO test -v
+    ;;
   docker)
     if [[ "$TAG" == "" ]]; then
       echo "Specify TAG env variable."
       exit 1
     fi
-    docker build -t "673156464838.dkr.ecr.us-west-2.amazonaws.com/block-producers-uptime:$TAG" -f dockerfiles/Dockerfile-delegation-backend .
+    # set image name to 673156464838.dkr.ecr.us-west-2.amazonaws.com/block-producers-uptime if IMAGE_NAME is not set
+    IMAGE_NAME=${IMAGE_NAME:-673156464838.dkr.ecr.us-west-2.amazonaws.com/block-producers-uptime}
+    docker build -t "$IMAGE_NAME:$TAG" -f dockerfiles/Dockerfile-delegation-backend .
     ;;
   "")
     cd src/cmd/delegation_backend

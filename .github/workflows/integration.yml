@@ -1,0 +1,46 @@
+name: Integration
+
+on:
+  push:
+    branches: 
+      - main
+    tags:
+      - '*'
+  pull_request:
+    branches: 
+      - main
+
+jobs:
+  build:
+    runs-on: minafoundation-default-runners
+  
+    steps:
+    - name: 📥 Checkout
+      uses: actions/checkout@v3    
+
+    - name: 📥 Update Git Submodules
+      run: |
+        git submodule init
+        git submodule update
+
+    - name: 📦 Install Nix
+      uses: cachix/install-nix-action@v22
+      with:
+        nix_path: nixpkgs=channel:nixos-unstable
+
+    - name: 🤌 Get Minimina
+      uses: MinaFoundation/install-minimina-action@v1
+      with:
+        stream: stable
+
+    - name: 🛠️ Build Docker
+      env:
+        IMAGE_NAME: uptime-service-backend
+        TAG: integration-test
+      run: nix-shell --run "make docker"
+
+    - name: 🧪 Run Integration Tests
+      env:
+        # UPTIME_SERVICE_SECRET is a passphrase needed to decrypt uptime service config files
+        UPTIME_SERVICE_SECRET: ${{ secrets.UPTIME_SERVICE_SECRET }}
+      run: nix-shell --run "make integration-test"

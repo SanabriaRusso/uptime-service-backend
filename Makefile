@@ -16,5 +16,8 @@ tidy:
 test:
 	GO=$(GO) ./scripts/build.sh test
 
+integration-test:
+	GO=$(GO) ./scripts/build.sh integration-test
+
 docker:
 	./scripts/build.sh $@

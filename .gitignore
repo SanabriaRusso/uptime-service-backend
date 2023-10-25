@@ -2,6 +2,9 @@
 bazel-*
 user.bazelrc
 
+# direnv config
+.envrc
+
 # make stuff
 result/
 
@@ -20,3 +23,7 @@ result/
 
 # Dependency directories (remove the comment below to include it)
 # vendor/
+
+app_config.json
+aws_creds.json
+minasheets.json
