@@ -7,13 +7,13 @@ import (
 
 func init() {
 	log.Println("Integration tests setup")
-	// err := encodeSecrets()
+	// err := encodeUptimeServiceConf()
 	// if err != nil {
-	// 	log.Fatalf("Failed to encode secrets: %v", err)
+	// 	log.Fatalf("Failed to encode uptime service configuration: %v", err)
 	// }
-	err := decodeSecrets()
+	err := decodeUptimeServiceConf()
 	if err != nil {
-		log.Fatalf("Failed to decode secrets: %v", err)
+		log.Fatalf("Failed to decode uptime service configuration: %v", err)
 	}
 }
 

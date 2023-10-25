@@ -26,7 +26,7 @@ var uptime_service_config_files = []string{
 	MINASHEETS_FILE,
 }
 
-func encodeSecrets() error {
+func encodeUptimeServiceConf() error {
 	fixturesSecret := os.Getenv("UPTIME_SERVICE_SECRET")
 	if fixturesSecret == "" {
 		return fmt.Errorf("Error: UPTIME_SERVICE_SECRET environment variable not set")
@@ -57,7 +57,7 @@ func encodeSecrets() error {
 	return nil
 }
 
-func decodeSecrets() error {
+func decodeUptimeServiceConf() error {
 	fixturesSecret := os.Getenv("UPTIME_SERVICE_SECRET")
 	if fixturesSecret == "" {
 		return fmt.Errorf("Error: UPTIME_SERVICE_SECRET environment variable not set")
