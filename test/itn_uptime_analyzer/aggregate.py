@@ -22,6 +22,8 @@ def process_csv_directory(directory):
             # Skip header lines
             next(csv_reader)
             next(csv_reader)
+            next(csv_reader)
+            next(csv_reader)
 
             for row in csv_reader:
                 key, value = row[0], float(row[1])
