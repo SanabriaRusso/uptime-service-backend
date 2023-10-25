@@ -34,7 +34,7 @@ def process_csv_directory(directory):
     with open(partial_output_filename, 'w') as partial_output_file:
         for key, values in data.items():
             print(f"{key}: {values}")
-            partial_output_file.write(f"{key}: {values}\n")
+            partial_output_file.write(f"{key}: {', '.join(map(str, values))}\n")
 
     for key, values in data.items():
         # XXX still not accurate. It will undervalue duplicated entries per day
