@@ -117,9 +117,32 @@ $ nix-shell
 
 ## Testing
 
-To run tests, enter the `nix-shell` and use the `make test` command:
+To run unit tests, enter the `nix-shell` and use the `make test` command:
 
 ```bash
 $ nix-shell
 [nix-shell]$ make test
 ```
+
+To execute the integration tests, you will need the `UPTIME_SERVICE_SECRET` passphrase. This is essential to decrypt the uptime service configuration files.
+
+### Steps to run integration tests
+ 
+1. **Build the Docker Image**:
+
+    ```bash
+    $ nix-shell
+    [nix-shell]$ export IMAGE_NAME=uptime-service-backend
+    [nix-shell]$ export TAG=integration-test
+    [nix-shell]$ make docker 
+    ```
+
+2. **Run the Integration Tests**:
+
+    ```bash
+    $ nix-shell
+    [nix-shell]$ export UPTIME_SERVICE_SECRET=YOUR_SECRET_HERE
+    [nix-shell]$ make integration-test 
+    ```
+
+> **Note:** Replace `YOUR_SECRET_HERE` with the appropriate value for `UPTIME_SERVICE_SECRET`.
