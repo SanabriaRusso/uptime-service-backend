@@ -41,5 +41,6 @@ jobs:
 
     - name: 🧪 Run Integration Tests
       env:
+        # UPTIME_SERVICE_SECRET is a passphrase needed to decrypt uptime service config files
         UPTIME_SERVICE_SECRET: ${{ secrets.UPTIME_SERVICE_SECRET }}
       run: nix-shell --run "make integration-test"
