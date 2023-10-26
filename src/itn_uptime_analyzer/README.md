@@ -63,7 +63,7 @@ Compilation
 -----------
 
 Assuming you are in the Nix shell described in the main directory
-READEME, enter this directory and type:
+README, enter this directory and type:
 
     $ go build
     
