@@ -83,7 +83,7 @@ func (identity Identity) GetUptime(config AppConfig, ctx dg.AwsContext, log *log
                         remoteAddr = submissionDataToday.RemoteAddr
                     }
 
-                    if (!config.IgnoreIPs || submissionDataToday.GraphqlControlPort != 0) {
+                    if (!config.IgnoreIPs && submissionDataToday.GraphqlControlPort != 0) {
                         if (identity.PublicKey == submissionDataToday.Submitter.String()) && (identity.PublicIp == remoteAddr) && (*identity.graphQLPort == strconv.Itoa(submissionDataToday.GraphqlControlPort)) {
 
                             currentSubmissionTime, err := time.Parse(time.RFC3339, submissionDataToday.CreatedAt)

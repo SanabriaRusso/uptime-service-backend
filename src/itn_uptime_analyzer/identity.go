@@ -95,7 +95,7 @@ func CreateIdentities(config AppConfig, ctx dg.AwsContext, log *logging.ZapEvent
                     remoteAddr = submissionData.RemoteAddr
                 }
 
-                if (!config.IgnoreIPs || submissionData.GraphqlControlPort != 0) {
+                if (!config.IgnoreIPs && submissionData.GraphqlControlPort != 0) {
                     identity = GetFullIdentity(submissionData.Submitter.String(), remoteAddr, strconv.Itoa(submissionData.GraphqlControlPort))
                 } else {
                     identity = GetPartialIdentity(submissionData.Submitter.String(), remoteAddr)
