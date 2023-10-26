@@ -89,10 +89,12 @@ func LoadEnv(log logging.EventLogger) AppConfig {
 		}
 
 		ignoreIPsRaw := os.Getenv("CONFIG_IGNORE_IPS")
-		if ignoreIPsRaw == "" {
+		if (ignoreIPsRaw == "" || ignoreIPsRaw == "0") {
 			ignoreIPs = false
-		} else {
+		} else if ignoreIPsRaw == "1" {
 			ignoreIPs = true
+		} else {
+			log.Fatal("Unrecognised CONFIG_IGNORE_IPS (should be either 0 or 1)!")
 		}
 
 	    startRaw := os.Getenv("CONFIG_PERIOD_START")

@@ -95,7 +95,7 @@ The network name is a name of the AWS S3 bucket's subdirectory in
 which to look for submissions.
 
 Additionally the following optional variables may be defined:
-* `CONFIG_IGNORE_IPS` – if not empty it tells the program to ignore
+* `CONFIG_IGNORE_IPS` – if set to `1`, it tells the program to ignore
   submissions' IP addresses and ports (see above)
 * `CONFIG_PERIOD_START`
 * `CONFIG_PERIOD_END`
