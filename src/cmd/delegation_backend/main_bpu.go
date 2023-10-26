@@ -29,9 +29,20 @@ func main() {
 
 	appCfg := LoadEnv(log)
 
-	awsCfg, err := config.LoadDefaultConfig(ctx, config.WithRegion(appCfg.Aws.Region))
-	if err != nil {
-		log.Fatalf("Error loading AWS configuration: %v", err)
+	var awsCfg aws.Config
+	var err error
+
+	if appCfg.Aws != nil {
+		awsCfg, err = config.LoadDefaultConfig(ctx, config.WithRegion(appCfg.Aws.Region))
+		if err != nil {
+			log.Fatalf("Error loading AWS configuration: %v", err)
+		}
+	} else if appCfg.Database != nil {
+		// Database related initializations
+	} else if appCfg.LocalFileSystem != nil {
+		// Local file system related initializations
+	} else {
+		log.Fatal("Unhandled configuration type!")
 	}
 
 	app := new(App)
@@ -40,12 +51,16 @@ func main() {
 		_, _ = rw.Write([]byte("delegation backend service"))
 	})
 	http.Handle("/v1/submit", app.NewSubmitH())
-	client := s3.NewFromConfig(awsCfg)
 
-	awsctx := AwsContext{Client: client, BucketName: aws.String(GetBucketName(appCfg)), Prefix: appCfg.NetworkName, Context: ctx, Log: log}
-	app.Save = func(objs ObjectsToSave) {
-		awsctx.S3Save(objs)
+	if appCfg.Aws != nil { // Check if AWSConfig is non-nil
+		client := s3.NewFromConfig(awsCfg)
+
+		awsctx := AwsContext{Client: client, BucketName: aws.String(GetAWSBucketName(appCfg)), Prefix: appCfg.NetworkName, Context: ctx, Log: log}
+		app.Save = func(objs ObjectsToSave) {
+			awsctx.S3Save(objs)
+		}
 	}
+
 	app.Now = func() time.Time { return time.Now() }
 	app.SubmitCounter = NewAttemptCounter(REQUESTS_PER_PK_HOURLY)
 	sheetsService, err2 := sheets.NewService(ctx, option.WithScopes(sheets.SpreadsheetsReadonlyScope))
@@ -64,4 +79,11 @@ func main() {
 		}
 	}()
 	log.Fatal(http.ListenAndServe(DELEGATION_BACKEND_LISTEN_TO, nil))
+}
+
+func GetAWSBucketName(config AppConfig) string {
+	if config.Aws != nil {
+		return config.Aws.AccountId + "-" + config.Aws.BucketNameSuffix
+	}
+	return "" // return empty in case AWSConfig is nil
 }
