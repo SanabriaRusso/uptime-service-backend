@@ -13,6 +13,7 @@ const (
 	TOPOLOGY_FILE = TEST_DATA_FOLDER + "/topology/topology.json"
 
 	APP_CONFIG_FILE = TEST_DATA_FOLDER + "/topology/uptime_service_config/app_config.json"
+	AWS_CREDS_FILE  = TEST_DATA_FOLDER + "/topology/uptime_service_config/aws_creds.json"
 	MINASHEETS_FILE = TEST_DATA_FOLDER + "/topology/uptime_service_config/minasheets.json"
 
 	TIMEOUT_IN_S = 600
@@ -20,6 +21,7 @@ const (
 
 var uptime_service_config_files = []string{
 	APP_CONFIG_FILE,
+	AWS_CREDS_FILE,
 	MINASHEETS_FILE,
 }
 
