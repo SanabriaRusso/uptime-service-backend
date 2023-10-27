@@ -29,22 +29,6 @@ func main() {
 
 	appCfg := LoadEnv(log)
 
-	var awsCfg aws.Config
-	var err error
-
-	if appCfg.Aws != nil {
-		awsCfg, err = config.LoadDefaultConfig(ctx, config.WithRegion(appCfg.Aws.Region))
-		if err != nil {
-			log.Fatalf("Error loading AWS configuration: %v", err)
-		}
-	} else if appCfg.Database != nil {
-		// Database related initializations
-	} else if appCfg.LocalFileSystem != nil {
-		// Local file system related initializations
-	} else {
-		log.Fatal("Unhandled configuration type!")
-	}
-
 	app := new(App)
 	app.Log = log
 	http.HandleFunc("/", func(rw http.ResponseWriter, r *http.Request) {
@@ -52,13 +36,29 @@ func main() {
 	})
 	http.Handle("/v1/submit", app.NewSubmitH())
 
-	if appCfg.Aws != nil { // Check if AWSConfig is non-nil
+	if appCfg.Aws != nil {
+		log.Infof("storage backend: AWS S3")
+		awsCfg, err := config.LoadDefaultConfig(ctx, config.WithRegion(appCfg.Aws.Region))
+		if err != nil {
+			log.Fatalf("Error loading AWS configuration: %v", err)
+		}
 		client := s3.NewFromConfig(awsCfg)
 
 		awsctx := AwsContext{Client: client, BucketName: aws.String(GetAWSBucketName(appCfg)), Prefix: appCfg.NetworkName, Context: ctx, Log: log}
 		app.Save = func(objs ObjectsToSave) {
 			awsctx.S3Save(objs)
 		}
+	} else if appCfg.LocalFileSystem != nil {
+		log.Infof("storage backend: Local File System")
+		// app.Save = func(objs ObjectsToSave) {
+		// 	LocalFileSystemSave(objs, appCfg.LocalFileSystem.Path, log)
+	} else if appCfg.Database != nil {
+		log.Infof("storage backend: Database")
+		// app.Save = func(objs ObjectsToSave) {
+		// 	DatabaseSave(objs, appCfg.Database, log)
+		// }
+	} else {
+		log.Fatal("No storage backend configured!")
 	}
 
 	app.Now = func() time.Time { return time.Now() }
