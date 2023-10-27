@@ -6,6 +6,8 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
+	"os"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -50,6 +52,29 @@ func (ctx *AwsContext) S3Save(objs ObjectsToSave) {
 		})
 		if err != nil {
 			ctx.Log.Warnf("Error while saving metadata: %v", err)
+		}
+	}
+}
+
+func LocalFileSystemSave(objs ObjectsToSave, directory string, log logging.StandardLogger) {
+	for path, bs := range objs {
+		fullPath := filepath.Join(directory, path)
+
+		// Check if file exists
+		if _, err := os.Stat(fullPath); !os.IsNotExist(err) {
+			log.Warnf("file already exists: %s", fullPath)
+			continue // skip to the next object
+		}
+
+		err := os.MkdirAll(filepath.Dir(fullPath), os.ModePerm)
+		if err != nil {
+			log.Warnf("Error creating directories for %s: %v", fullPath, err)
+			continue // skip to the next object
+		}
+
+		err = os.WriteFile(fullPath, bs, 0644)
+		if err != nil {
+			log.Warnf("Error writing to file %s: %v", fullPath, err)
 		}
 	}
 }
