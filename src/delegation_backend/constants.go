@@ -22,13 +22,6 @@ func NetworkId() uint8 {
 	return 0
 }
 
-func GetAWSBucketName(config AppConfig) string {
-	if config.Aws != nil {
-		return config.Aws.AccountId + "-" + config.Aws.BucketNameSuffix
-	}
-	return "" // return empty in case AWSConfig is nil
-}
-
 const PK_LENGTH = 33  // one field element (32B) + 1 bit (encoded as full byte)
 const SIG_LENGTH = 64 // one field element (32B) and one scalar (32B)
 

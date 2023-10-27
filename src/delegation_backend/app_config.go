@@ -7,6 +7,13 @@ import (
 	logging "github.com/ipfs/go-log/v2"
 )
 
+func GetAWSBucketName(config AppConfig) string {
+	if config.Aws != nil {
+		return config.Aws.AccountId + "-" + config.Aws.BucketNameSuffix
+	}
+	return "" // return empty in case AWSConfig is nil
+}
+
 func LoadEnv(log logging.EventLogger) AppConfig {
 	var config AppConfig
 
