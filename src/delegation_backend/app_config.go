@@ -29,6 +29,7 @@ func LoadEnv(log logging.EventLogger) AppConfig {
 		if err != nil {
 			log.Fatalf("Error decoding config file: %s", err)
 		}
+		// Set AWS credentials from config file in case we are using AWS
 		if config.Aws != nil {
 			os.Setenv("AWS_ACCESS_KEY_ID", config.Aws.AccessKeyId)
 			os.Setenv("AWS_SECRET_ACCESS_KEY", config.Aws.SecretAccessKey)
