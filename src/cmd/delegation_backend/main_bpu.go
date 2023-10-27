@@ -31,10 +31,6 @@ func main() {
 
 	app := new(App)
 	app.Log = log
-	http.HandleFunc("/", func(rw http.ResponseWriter, r *http.Request) {
-		_, _ = rw.Write([]byte("delegation backend service"))
-	})
-	http.Handle("/v1/submit", app.NewSubmitH())
 
 	if appCfg.Aws != nil {
 		log.Infof("storage backend: AWS S3")
@@ -61,6 +57,11 @@ func main() {
 		log.Fatal("No storage backend configured!")
 	}
 
+	http.HandleFunc("/", func(rw http.ResponseWriter, r *http.Request) {
+		_, _ = rw.Write([]byte("delegation backend service"))
+	})
+	http.Handle("/v1/submit", app.NewSubmitH())
+
 	app.Now = func() time.Time { return time.Now() }
 	app.SubmitCounter = NewAttemptCounter(REQUESTS_PER_PK_HOURLY)
 	sheetsService, err2 := sheets.NewService(ctx, option.WithScopes(sheets.SpreadsheetsReadonlyScope))
@@ -78,5 +79,6 @@ func main() {
 			time.Sleep(WHITELIST_REFRESH_INTERVAL)
 		}
 	}()
+
 	log.Fatal(http.ListenAndServe(DELEGATION_BACKEND_LISTEN_TO, nil))
 }
