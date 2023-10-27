@@ -80,10 +80,3 @@ func main() {
 	}()
 	log.Fatal(http.ListenAndServe(DELEGATION_BACKEND_LISTEN_TO, nil))
 }
-
-func GetAWSBucketName(config AppConfig) string {
-	if config.Aws != nil {
-		return config.Aws.AccountId + "-" + config.Aws.BucketNameSuffix
-	}
-	return "" // return empty in case AWSConfig is nil
-}
