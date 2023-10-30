@@ -28,7 +28,8 @@ func loadAwsCredentials(filename string, log logging.EventLogger) {
 }
 
 func LoadEnv(log logging.EventLogger) AppConfig {
-    Options := [5]Option { NetworkName, AwsRegion, AwsAccountId, IgnoreIPs, Period }
+    Options := [8]Option { NetworkName, AwsRegion, AwsAccountId, IgnoreIPs,
+		StdOut, LocalOutput, S3Output, Period }
     var config AppConfig
 
     configFile := os.Getenv("CONFIG_FILE")
@@ -68,9 +69,10 @@ type AwsConfig struct {
 }
 
 type OutputConfig struct {
-    Stdout bool    `json:"stdout"`
-    Local  string  `json:"local"`
-    S3     string  `json:"s3"`
+    Stdout    bool    `json:"stdout"`
+    Local     string  `json:"local"`
+	S3Bucket  string  `json:"s3_bucket"`
+    S3Key     string  `json:"s3"`
 }
 
 type AppConfig struct {
@@ -78,6 +80,7 @@ type AppConfig struct {
     NetworkName            string         `json:"network_name"`
     Period                 PeriodConfig   `json:"period"`
     IgnoreIPs              bool           `json:"ignore_ips"`
+	Output                 OutputConfig   `json:"output"`
 }
 
 type AwsCredentials struct {
@@ -91,14 +94,6 @@ type Option struct {
 }
 
 func noop(log logging.EventLogger, config *AppConfig) {}
-
-func getEnvMandatory(log logging.EventLogger, name string) string {
-    value := os.Getenv(name)
-    if value == "" {
-        log.Fatalf("Missing %s environment variable", name)
-    }
-    return value
-}
 
 func getEnvParsed[T any](log logging.EventLogger, parser func(string) (T, error), name string) *T {
     raw := os.Getenv(name)
@@ -132,43 +127,82 @@ func unlessDefault[T comparable](value T, defaultVal T) *T {
     return &value
 }
 
+func boolOption(envVar string, set func (bool, *AppConfig)) Option {
+	return Option {
+		updateJSON: noop,
+		updateFromEnv: func (log logging.EventLogger, cfg *AppConfig) {
+			raw := os.Getenv(envVar)
+			if raw == "" || raw == "0" {
+				set(false, cfg)
+			} else if raw == "1" {
+				set(true, cfg)
+			} else {
+				log.Fatalf("Unrecognised %s (should be either 0 or 1)!", envVar)
+			}
+		},
+	}
+}
+
+func stringOption(envVar string, defVal *string, set func (string, *AppConfig)) Option {
+	return Option {
+		updateJSON: noop,
+		updateFromEnv: func (log logging.EventLogger, cfg *AppConfig) {
+			value := os.Getenv(envVar)
+			switch {
+				case value == "" && defVal != nil: set(*defVal, cfg)
+				case value == "": log.Fatalf("Missing %s environment variable", envVar)
+				default: set(value, cfg)
+			}
+		},
+	}
+}
+
 var (
-    NetworkName = Option{
-        updateJSON: noop,
-        updateFromEnv: func (log logging.EventLogger, cfg *AppConfig) {
-            cfg.NetworkName = getEnvMandatory(log, "CONFIG_NETWORK_NAME")
-        },
-    }
+	empty = ""
 
-    AwsRegion = Option{
-        updateJSON: noop,
-        updateFromEnv: func (log logging.EventLogger, cfg *AppConfig) {
-            cfg.Aws.Region = getEnvMandatory(log, "CONFIG_AWS_REGION")
-        },
-    }
+    NetworkName = stringOption("CONFIG_NETWORK_NAME", nil, func (value string, cfg *AppConfig) {
+		cfg.NetworkName = value
+	})
 
-    AwsAccountId = Option{
-        updateJSON: noop,
-        updateFromEnv: func (log logging.EventLogger, cfg *AppConfig) {
-            cfg.Aws.AccountId = getEnvMandatory(log, "CONFIG_AWS_ACCOUNT_ID")
-        },
-    }
+    AwsRegion = stringOption("CONFIG_AWS_REGION", nil, func (value string, cfg *AppConfig) {
+		cfg.Aws.Region = value
+	})
 
-    IgnoreIPs = Option{
-        updateJSON: noop,
-        updateFromEnv: func (log logging.EventLogger, cfg *AppConfig) {
-            raw := os.Getenv("CONFIG_IGNORE_IPS")
-            if raw == "" || raw == "0" {
-                cfg.IgnoreIPs = false
-            } else if raw == "1" {
-                cfg.IgnoreIPs = true
-            } else {
-                log.Fatalf("Unrecognised CONFIG_IGNORE_IPS (should be either 0 or 1)!")
-            }
-        },
-    }
+    AwsAccountId = stringOption("CONFIG_AWS_ACCOUNT_ID", nil, func (value string, cfg *AppConfig) {
+		cfg.Aws.AccountId = value
+	})
 
-    Period = Option{
+    IgnoreIPs = boolOption("CONFIG_IGNORE_IPS", func (value bool, cfg *AppConfig) {
+		cfg.IgnoreIPs = value
+	})
+
+	StdOut = boolOption("CONFIG_STDOUT", func (value bool, cfg *AppConfig) {
+		cfg.Output.Stdout = value
+	})
+
+	LocalOutput = stringOption("CONFIG_LOCAL_OUTPUT", &empty, func (value string, cfg *AppConfig) {
+		cfg.Output.Local = value
+	})
+
+	S3Output = Option {
+		updateJSON: func (log logging.EventLogger, cfg *AppConfig) {
+			if (cfg.Output.S3Bucket == "") != (cfg.Output.S3Key == "") {
+				log.Fatalf("Either both or neither of S3 bucket and S3 key should be set!")
+			}
+		},
+		updateFromEnv: func (log logging.EventLogger, cfg *AppConfig) {
+			bucket := os.Getenv("CONFIG_S3_BUCKET")
+			key := os.Getenv("CONFIG_S3_KEY")
+			if (bucket == "") && (key == "") {
+				cfg.Output.S3Bucket = bucket
+				cfg.Output.S3Key = key
+			} else {
+				log.Fatalf("Either both or neither of S3 bucket and S3 key should be set!")
+			}
+		},
+	}
+
+    Period = Option {
         updateJSON: func (log logging.EventLogger, cfg *AppConfig) {
             // 1st Jan 0001 is the default value, which appears if it is absent
             // from the config file.
