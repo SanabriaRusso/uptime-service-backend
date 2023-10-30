@@ -16,8 +16,7 @@ const (
 	AWS_CREDS_FILE  = TEST_DATA_FOLDER + "/topology/uptime_service_config/aws_creds.json"
 	MINASHEETS_FILE = TEST_DATA_FOLDER + "/topology/uptime_service_config/minasheets.json"
 
-	BUCKET_NAME_SUFFIX = "block-producers-uptime"
-	TIMEOUT_IN_S       = 600
+	TIMEOUT_IN_S = 600
 )
 
 var uptime_service_config_files = []string{

@@ -3,10 +3,12 @@ package integration_tests
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"log"
+	"os"
 	"strings"
 	"time"
+
+	"block_producers_uptime/delegation_backend"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
@@ -14,40 +16,13 @@ import (
 	"github.com/aws/aws-sdk-go/service/s3"
 )
 
-type AWSCreds struct {
-	AccessKeyID     string `json:"access_key_id"`
-	SecretAccessKey string `json:"secret_access_key"`
-}
-
-type AppConfig struct {
-	NetworkName string `json:"network_name"`
-	AWS         struct {
-		AccountID string `json:"account_id"`
-		Region    string `json:"region"`
-	} `json:"aws"`
-}
-
-func getAWSCreds() AWSCreds {
-	credsBytes, err := ioutil.ReadFile(AWS_CREDS_FILE)
-	if err != nil {
-		log.Fatalf("Failed to read aws_creds.json: %v", err)
-	}
-
-	var creds AWSCreds
-	if err := json.Unmarshal(credsBytes, &creds); err != nil {
-		log.Fatalf("Failed to parse aws_creds.json: %v", err)
-	}
-
-	return creds
-}
-
-func getAppConfig() AppConfig {
-	appConfigBytes, err := ioutil.ReadFile(APP_CONFIG_FILE)
+func getAppConfig() delegation_backend.AppConfig {
+	appConfigBytes, err := os.ReadFile(APP_CONFIG_FILE)
 	if err != nil {
 		log.Fatalf("Failed to read app_config.json: %v", err)
 	}
 
-	var config AppConfig
+	var config delegation_backend.AppConfig
 	if err := json.Unmarshal(appConfigBytes, &config); err != nil {
 		log.Fatalf("Failed to parse app_config.json: %v", err)
 	}
@@ -55,18 +30,18 @@ func getAppConfig() AppConfig {
 	return config
 }
 
-func getAWSBucketName(config AppConfig) string {
-	return config.AWS.AccountID + "-" + BUCKET_NAME_SUFFIX
+func getAWSBucketName(config delegation_backend.AppConfig) string {
+	return config.Aws.AccountId + "-" + config.Aws.BucketNameSuffix
 }
 
-func getAWSIntegrationTestFolder(config AppConfig) string {
+func getAWSIntegrationTestFolder(config delegation_backend.AppConfig) string {
 	return strings.Trim(config.NetworkName, "/") + "/"
 }
 
-func getS3Service(creds AWSCreds, config AppConfig) *s3.S3 {
-	accessKeyID := creds.AccessKeyID
-	secretAccessKey := creds.SecretAccessKey
-	region := config.AWS.Region
+func getS3Service(config delegation_backend.AppConfig) *s3.S3 {
+	accessKeyID := config.Aws.AccessKeyId
+	secretAccessKey := config.Aws.SecretAccessKey
+	region := config.Aws.Region
 
 	sess, err := session.NewSession(&aws.Config{
 		Region:      aws.String(region),
@@ -79,12 +54,12 @@ func getS3Service(creds AWSCreds, config AppConfig) *s3.S3 {
 	return s3.New(sess)
 }
 
-func emptyIntegrationTestFolder(creds AWSCreds, config AppConfig) error {
+func emptyIntegrationTestFolder(config delegation_backend.AppConfig) error {
 	log.Printf("Emptying AWS S3 integration_test folder")
 
 	bucketName := getAWSBucketName(config)
 	folderPrefix := getAWSIntegrationTestFolder(config)
-	svc := getS3Service(creds, config)
+	svc := getS3Service(config)
 
 	// List objects with the specified prefix
 	listObjectsInput := &s3.ListObjectsV2Input{
@@ -115,12 +90,12 @@ func emptyIntegrationTestFolder(creds AWSCreds, config AppConfig) error {
 	return nil
 }
 
-func waitUntilS3BucketHasBlocksAndSubmissions(creds AWSCreds, config AppConfig) error {
+func waitUntilS3BucketHasBlocksAndSubmissions(config delegation_backend.AppConfig) error {
 	log.Printf("Waiting for blocks and submissions to appear in the S3 bucket")
 
 	bucketName := getAWSBucketName(config)
 	folderPrefix := getAWSIntegrationTestFolder(config)
-	svc := getS3Service(creds, config)
+	svc := getS3Service(config)
 
 	hasBlocks := false
 	hasSubmissionsForToday := false

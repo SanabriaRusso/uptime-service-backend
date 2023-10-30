@@ -7,20 +7,11 @@ import (
 	logging "github.com/ipfs/go-log/v2"
 )
 
-func loadAwsCredentials(filename string, log logging.EventLogger) {
-	file, err := os.Open(filename)
-	if err != nil {
-		log.Fatalf("Error loading credentials file: %s", err)
+func GetAWSBucketName(config AppConfig) string {
+	if config.Aws != nil {
+		return config.Aws.AccountId + "-" + config.Aws.BucketNameSuffix
 	}
-	defer file.Close()
-	decoder := json.NewDecoder(file)
-	var credentials AwsCredentials
-	err = decoder.Decode(&credentials)
-	if err != nil {
-		log.Fatalf("Error loading credentials file: %s", err)
-	}
-	os.Setenv("AWS_ACCESS_KEY_ID", credentials.AccessKeyId)
-	os.Setenv("AWS_SECRET_ACCESS_KEY", credentials.SecretAccessKey)
+	return "" // return empty in case AWSConfig is nil
 }
 
 func LoadEnv(log logging.EventLogger) AppConfig {
@@ -36,73 +27,108 @@ func LoadEnv(log logging.EventLogger) AppConfig {
 		decoder := json.NewDecoder(file)
 		err = decoder.Decode(&config)
 		if err != nil {
-			log.Fatalf("Error loading config file: %s", err)
+			log.Fatalf("Error decoding config file: %s", err)
+		}
+		// Set AWS credentials from config file in case we are using AWS
+		if config.Aws != nil {
+			os.Setenv("AWS_ACCESS_KEY_ID", config.Aws.AccessKeyId)
+			os.Setenv("AWS_SECRET_ACCESS_KEY", config.Aws.SecretAccessKey)
 		}
 	} else {
-		networkName := os.Getenv("CONFIG_NETWORK_NAME")
-		if networkName == "" {
-			log.Fatal("missing NETWORK_NAME environment variable")
+		networkName := getEnvChecked("CONFIG_NETWORK_NAME", log)
+		gsheetId := getEnvChecked("CONFIG_GSHEET_ID", log)
+		delegationWhitelistList := getEnvChecked("DELEGATION_WHITELIST_LIST", log)
+		delegationWhitelistColumn := getEnvChecked("DELEGATION_WHITELIST_COLUMN", log)
+
+		// AWS configurations
+		if accessKeyId := os.Getenv("AWS_ACCESS_KEY_ID"); accessKeyId != "" {
+			secretAccessKey := getEnvChecked("AWS_SECRET_ACCESS_KEY", log)
+			awsRegion := getEnvChecked("CONFIG_AWS_REGION", log)
+			awsAccountId := getEnvChecked("CONFIG_AWS_ACCOUNT_ID", log)
+			bucketNameSuffix := getEnvChecked("CONFIG_BUCKET_NAME_SUFFIX", log)
+
+			config.Aws = &AwsConfig{
+				AccountId:        awsAccountId,
+				BucketNameSuffix: bucketNameSuffix,
+				Region:           awsRegion,
+				AccessKeyId:      accessKeyId,
+				SecretAccessKey:  secretAccessKey,
+			}
 		}
 
-		gsheetId := os.Getenv("CONFIG_GSHEET_ID")
-		if gsheetId == "" {
-			log.Fatal("missing GSHEET_ID environment variable")
+		// Database configurations
+		if connectionString := os.Getenv("CONFIG_DATABASE_CONNECTION_STRING"); connectionString != "" {
+			databaseType := getEnvChecked("CONFIG_DATABASE_TYPE", log)
+
+			config.Database = &DatabaseConfig{
+				ConnectionString: connectionString,
+				DatabaseType:     databaseType,
+			}
 		}
 
-		awsRegion := os.Getenv("CONFIG_AWS_REGION")
-		if awsRegion == "" {
-			log.Fatal("missing AWS_REGION environment variable")
+		// LocalFileSystem configurations
+		if path := os.Getenv("CONFIG_FILESYSTEM_PATH"); path != "" {
+			config.LocalFileSystem = &LocalFileSystemConfig{
+				Path: path,
+			}
 		}
 
-		awsAccountId := os.Getenv("CONFIG_AWS_ACCOUNT_ID")
-		if awsAccountId == "" {
-			log.Fatal("missing AWS_ACCOUNT_ID environment variable")
-		}
-
-		delegationWhitelistList := os.Getenv("DELEGATION_WHITELIST_LIST")
-		if delegationWhitelistList == "" {
-			log.Fatal("missing DELEGATION_WHITELIST_LIST environment variable")
-		}
-
-		delegationWhitelistColumn := os.Getenv("DELEGATION_WHITELIST_COLUMN")
-		if delegationWhitelistColumn == "" {
-			log.Fatal("missing DELEGATION_WHITELIST_COLUMN environment variable")
-		}
-
-		config = AppConfig{
-			NetworkName:               networkName,
-			GsheetId:                  gsheetId,
-			DelegationWhitelistList:   delegationWhitelistList,
-			DelegationWhitelistColumn: delegationWhitelistColumn,
-			Aws: AwsConfig{
-				Region:    awsRegion,
-				AccountId: awsAccountId,
-			},
-		}
+		config.NetworkName = networkName
+		config.GsheetId = gsheetId
+		config.DelegationWhitelistList = delegationWhitelistList
+		config.DelegationWhitelistColumn = delegationWhitelistColumn
 	}
 
-	awsCredentialsFile := os.Getenv("AWS_CREDENTIALS_FILE")
-	if awsCredentialsFile != "" {
-		loadAwsCredentials(awsCredentialsFile, log)
+	// Check that only one of Aws, Database, or LocalFileSystem is provided
+	configCount := 0
+	if config.Aws != nil {
+		configCount++
+	}
+	if config.Database != nil {
+		configCount++
+	}
+	if config.LocalFileSystem != nil {
+		configCount++
+	}
+
+	if configCount != 1 {
+		log.Fatalf("Error: You can only provide one of Aws, Database, or LocalFileSystem configurations.")
 	}
 
 	return config
 }
 
+func getEnvChecked(variable string, log logging.EventLogger) string {
+	value := os.Getenv(variable)
+	if value == "" {
+		log.Fatalf("missing %s environment variable", variable)
+	}
+	return value
+}
+
 type AwsConfig struct {
-	Region    string `json:"region"`
-	AccountId string `json:"account_id"`
+	AccountId        string `json:"account_id"`
+	BucketNameSuffix string `json:"bucket_name_suffix"`
+	Region           string `json:"region"`
+	AccessKeyId      string `json:"access_key_id"`
+	SecretAccessKey  string `json:"secret_access_key"`
+}
+
+type DatabaseConfig struct {
+	ConnectionString string `json:"connection_string"`
+	DatabaseType     string `json:"database_type"`
+}
+
+type LocalFileSystemConfig struct {
+	Path string `json:"path"`
 }
 
 type AppConfig struct {
-	Aws                       AwsConfig `json:"aws"`
-	NetworkName               string    `json:"network_name"`
-	GsheetId                  string    `json:"gsheet_id"`
-	DelegationWhitelistList   string    `json:"delegation_whitelist_list"`
-	DelegationWhitelistColumn string    `json:"delegation_whitelist_column"`
-}
-
-type AwsCredentials struct {
-	AccessKeyId     string `json:"access_key_id"`
-	SecretAccessKey string `json:"secret_access_key"`
+	NetworkName               string                 `json:"network_name"`
+	GsheetId                  string                 `json:"gsheet_id"`
+	DelegationWhitelistList   string                 `json:"delegation_whitelist_list"`
+	DelegationWhitelistColumn string                 `json:"delegation_whitelist_column"`
+	Aws                       *AwsConfig             `json:"aws,omitempty"`
+	Database                  *DatabaseConfig        `json:"database,omitempty"`
+	LocalFileSystem           *LocalFileSystemConfig `json:"filesystem,omitempty"`
 }
