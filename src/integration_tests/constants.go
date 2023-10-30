@@ -2,6 +2,7 @@ package integration_tests
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"os/exec"
 	"strings"
@@ -44,6 +45,19 @@ func getJsonFiles(dir string) ([]string, error) {
 	return getDirFiles(dir, ".json")
 }
 
+// copy app_config_*.json to app_config.json
+func setAppConfig(config_type string) error {
+	conf_file := "/app_config_" + config_type + ".json"
+	log.Printf("Setting %s as %s...\n", conf_file, APP_CONFIG_FILE)
+
+	err := copyFile(UPTIME_SERVICE_CONFIG_DIR+conf_file, APP_CONFIG_FILE)
+	if err != nil {
+		return fmt.Errorf("Error copying %s: %s\n", APP_CONFIG_FILE, err)
+	}
+
+	return nil
+}
+
 func encodeUptimeServiceConf() error {
 	fixturesSecret := os.Getenv("UPTIME_SERVICE_SECRET")
 	if fixturesSecret == "" {
@@ -54,9 +68,8 @@ func encodeUptimeServiceConf() error {
 	if err != nil {
 		return err
 	}
-	fmt.Printf("jsonFiles: %v\n", jsonFiles)
 	for _, json_file := range jsonFiles {
-		fmt.Printf(">> Encoding %s...\n", json_file)
+		log.Printf(">> Encoding %s...\n", json_file)
 
 		// Construct the gpg command
 		cmd := exec.Command(
@@ -74,7 +87,7 @@ func encodeUptimeServiceConf() error {
 			return fmt.Errorf("Error encoding %s: %s\n", json_file, err)
 		}
 
-		fmt.Println(string(out))
+		log.Println(string(out))
 	}
 
 	return nil
@@ -95,11 +108,11 @@ func decodeUptimeServiceConf() error {
 		json_file := strings.TrimSuffix(gpg_file, ".gpg")
 		// skip if file exists
 		if _, err := os.Stat(json_file); err == nil {
-			fmt.Printf(">> Skipping decoding %s... JSON file already exists.\n", gpg_file)
+			log.Printf(">> Skipping decoding %s... JSON file already exists.\n", gpg_file)
 			continue
 		}
 
-		fmt.Printf(">> Decoding %s...\n", gpg_file)
+		log.Printf(">> Decoding %s...\n", gpg_file)
 
 		// Construct the gpg command
 		cmd := exec.Command(
@@ -117,7 +130,7 @@ func decodeUptimeServiceConf() error {
 			return fmt.Errorf("Error decoding %s: %s\n", gpg_file, err)
 		}
 
-		fmt.Println(string(out))
+		log.Println(string(out))
 	}
 
 	return nil
