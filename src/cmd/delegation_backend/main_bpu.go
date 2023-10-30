@@ -46,13 +46,10 @@ func main() {
 		}
 	} else if appCfg.LocalFileSystem != nil {
 		log.Infof("storage backend: Local File System")
-		// app.Save = func(objs ObjectsToSave) {
-		// 	LocalFileSystemSave(objs, appCfg.LocalFileSystem.Path, log)
+		// future implementation of local file system storage
 	} else if appCfg.Database != nil {
 		log.Infof("storage backend: Database")
-		// app.Save = func(objs ObjectsToSave) {
-		// 	DatabaseSave(objs, appCfg.Database, log)
-		// }
+		// future implementation of database storage
 	} else {
 		log.Fatal("No storage backend configured!")
 	}

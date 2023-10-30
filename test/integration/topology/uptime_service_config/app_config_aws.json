@@ -1,0 +1,14 @@
+{
+  "network_name": "integration-test",
+  "gsheet_id": "1wkcNTMgqwdRZIwcMRO3l8Fda6YQfvkmtIvdIkl2AD3w",
+  "analyzer_output_gsheet_id": "1UwpcBIXlbYN541W1uZVZCv7H_uLVosOnvEhVvFzE8FM",
+  "delegation_whitelist_list": "Form Responses 1",
+  "delegation_whitelist_column": "E",
+  "aws": {
+    "account_id": "673156464838",
+    "bucket_name_suffix": "block-producers-uptime-integration-testing",
+    "region": "us-west-2",
+    "access_key_id": "AKIAZZO2AQDDG4V5SOJI",
+    "secret_access_key": "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"
+  }
+}
