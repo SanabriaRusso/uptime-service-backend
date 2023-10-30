@@ -68,6 +68,28 @@ func (m *MockLogger) Fatalf(format string, args ...interface{}) {
 	m.lastMessage = fmt.Sprintf(format, args...)
 }
 
+func TestGetEnvChecked(t *testing.T) {
+	// Reset environment variables
+	os.Clearenv()
+
+	// Mock logger instance
+	mockLogger := &MockLogger{}
+
+	// Case 1: Environment variable is set
+	os.Setenv("TEST_VARIABLE", "testvalue")
+	value := getEnvChecked("TEST_VARIABLE", mockLogger)
+	if value != "testvalue" {
+		t.Errorf("Expected 'testvalue', got '%s'", value)
+	}
+
+	// Case 2: Environment variable is NOT set
+	getEnvChecked("MISSING_VARIABLE", mockLogger)
+	if !(mockLogger.lastMessage == "missing MISSING_VARIABLE environment variable") {
+		t.Error("Expected Fatalf to be called due to missing environment variable")
+	}
+
+}
+
 func TestLoadEnv(t *testing.T) {
 	mockLogger := &MockLogger{}
 
@@ -171,15 +193,7 @@ func TestLoadEnv(t *testing.T) {
 		}
 
 		// Cleanup
-		os.Unsetenv("CONFIG_NETWORK_NAME")
-		os.Unsetenv("CONFIG_GSHEET_ID")
-		os.Unsetenv("DELEGATION_WHITELIST_LIST")
-		os.Unsetenv("DELEGATION_WHITELIST_COLUMN")
-		os.Unsetenv("AWS_ACCESS_KEY_ID")
-		os.Unsetenv("AWS_SECRET_ACCESS_KEY")
-		os.Unsetenv("CONFIG_AWS_REGION")
-		os.Unsetenv("CONFIG_AWS_ACCOUNT_ID")
-		os.Unsetenv("CONFIG_BUCKET_NAME_SUFFIX")
+		os.Clearenv()
 	})
 
 	t.Run("load Database from env", func(t *testing.T) {
@@ -196,12 +210,7 @@ func TestLoadEnv(t *testing.T) {
 		}
 
 		// Cleanup
-		os.Unsetenv("CONFIG_NETWORK_NAME")
-		os.Unsetenv("CONFIG_GSHEET_ID")
-		os.Unsetenv("DELEGATION_WHITELIST_LIST")
-		os.Unsetenv("DELEGATION_WHITELIST_COLUMN")
-		os.Unsetenv("CONFIG_DATABASE_CONNECTION_STRING")
-		os.Unsetenv("CONFIG_DATABASE_TYPE")
+		os.Clearenv()
 	})
 
 	t.Run("load Filesystem from env", func(t *testing.T) {
@@ -217,17 +226,25 @@ func TestLoadEnv(t *testing.T) {
 		}
 
 		// Cleanup
-		os.Unsetenv("CONFIG_NETWORK_NAME")
-		os.Unsetenv("CONFIG_GSHEET_ID")
-		os.Unsetenv("DELEGATION_WHITELIST_LIST")
-		os.Unsetenv("DELEGATION_WHITELIST_COLUMN")
-		os.Unsetenv("CONFIG_FILESYSTEM_PATH")
+		os.Clearenv()
 	})
 
 	t.Run("multiple configs error from env", func(t *testing.T) {
 		// Set env variables for both AWS and Database
+		os.Setenv("CONFIG_NETWORK_NAME", "test_network")
+		os.Setenv("CONFIG_GSHEET_ID", "test_gsheet_id")
+		os.Setenv("DELEGATION_WHITELIST_LIST", "test_list")
+		os.Setenv("DELEGATION_WHITELIST_COLUMN", "test_column")
+
 		os.Setenv("AWS_ACCESS_KEY_ID", "test_access_key_id")
+		os.Setenv("AWS_ACCESS_KEY_ID", "test_access_key_id")
+		os.Setenv("AWS_SECRET_ACCESS_KEY", "test_secret_access_key")
+		os.Setenv("CONFIG_AWS_REGION", "test_region")
+		os.Setenv("CONFIG_AWS_ACCOUNT_ID", "test_account_id")
+		os.Setenv("CONFIG_BUCKET_NAME_SUFFIX", "test_suffix")
+
 		os.Setenv("CONFIG_DATABASE_CONNECTION_STRING", "test_connection_string")
+		os.Setenv("CONFIG_DATABASE_TYPE", "test_type")
 
 		LoadEnv(mockLogger)
 		if mockLogger.lastMessage != "Error: You can only provide one of Aws, Database, or LocalFileSystem configurations." {
@@ -235,8 +252,7 @@ func TestLoadEnv(t *testing.T) {
 		}
 
 		// Cleanup
-		os.Unsetenv("AWS_ACCESS_KEY_ID")
-		os.Unsetenv("CONFIG_DATABASE_CONNECTION_STRING")
+		os.Clearenv()
 	})
 
 	t.Run("multiple configs error from file", func(t *testing.T) {

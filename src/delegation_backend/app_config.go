@@ -35,44 +35,17 @@ func LoadEnv(log logging.EventLogger) AppConfig {
 			os.Setenv("AWS_SECRET_ACCESS_KEY", config.Aws.SecretAccessKey)
 		}
 	} else {
-		networkName := os.Getenv("CONFIG_NETWORK_NAME")
-		if networkName == "" {
-			log.Fatal("missing NETWORK_NAME environment variable")
-		}
-
-		gsheetId := os.Getenv("CONFIG_GSHEET_ID")
-		if gsheetId == "" {
-			log.Fatal("missing GSHEET_ID environment variable")
-		}
-
-		delegationWhitelistList := os.Getenv("DELEGATION_WHITELIST_LIST")
-		if delegationWhitelistList == "" {
-			log.Fatal("missing DELEGATION_WHITELIST_LIST environment variable")
-		}
-
-		delegationWhitelistColumn := os.Getenv("DELEGATION_WHITELIST_COLUMN")
-		if delegationWhitelistColumn == "" {
-			log.Fatal("missing DELEGATION_WHITELIST_COLUMN environment variable")
-		}
+		networkName := getEnvChecked("CONFIG_NETWORK_NAME", log)
+		gsheetId := getEnvChecked("CONFIG_GSHEET_ID", log)
+		delegationWhitelistList := getEnvChecked("DELEGATION_WHITELIST_LIST", log)
+		delegationWhitelistColumn := getEnvChecked("DELEGATION_WHITELIST_COLUMN", log)
 
 		// AWS configurations
 		if accessKeyId := os.Getenv("AWS_ACCESS_KEY_ID"); accessKeyId != "" {
-			secretAccessKey := os.Getenv("AWS_SECRET_ACCESS_KEY")
-			if secretAccessKey == "" {
-				log.Fatal("missing AWS_SECRET_ACCESS_KEY environment variable")
-			}
-			awsRegion := os.Getenv("CONFIG_AWS_REGION")
-			if awsRegion == "" {
-				log.Fatal("missing AWS_REGION environment variable")
-			}
-			awsAccountId := os.Getenv("CONFIG_AWS_ACCOUNT_ID")
-			if awsAccountId == "" {
-				log.Fatal("missing CONFIG_AWS_ACCOUNT_ID environment variable")
-			}
-			bucketNameSuffix := os.Getenv("CONFIG_BUCKET_NAME_SUFFIX")
-			if bucketNameSuffix == "" {
-				log.Fatal("missing CONFIG_BUCKET_NAME_SUFFIX environment variable")
-			}
+			secretAccessKey := getEnvChecked("AWS_SECRET_ACCESS_KEY", log)
+			awsRegion := getEnvChecked("CONFIG_AWS_REGION", log)
+			awsAccountId := getEnvChecked("CONFIG_AWS_ACCOUNT_ID", log)
+			bucketNameSuffix := getEnvChecked("CONFIG_BUCKET_NAME_SUFFIX", log)
 
 			config.Aws = &AwsConfig{
 				AccountId:        awsAccountId,
@@ -85,10 +58,7 @@ func LoadEnv(log logging.EventLogger) AppConfig {
 
 		// Database configurations
 		if connectionString := os.Getenv("CONFIG_DATABASE_CONNECTION_STRING"); connectionString != "" {
-			databaseType := os.Getenv("CONFIG_DATABASE_TYPE")
-			if databaseType == "" {
-				log.Fatal("missing CONFIG_DATABASE_TYPE environment variable")
-			}
+			databaseType := getEnvChecked("CONFIG_DATABASE_TYPE", log)
 
 			config.Database = &DatabaseConfig{
 				ConnectionString: connectionString,
@@ -126,6 +96,14 @@ func LoadEnv(log logging.EventLogger) AppConfig {
 	}
 
 	return config
+}
+
+func getEnvChecked(variable string, log logging.EventLogger) string {
+	value := os.Getenv(variable)
+	if value == "" {
+		log.Fatalf("missing %s environment variable", variable)
+	}
+	return value
 }
 
 type AwsConfig struct {
