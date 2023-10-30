@@ -54,7 +54,7 @@ func getS3Service(config delegation_backend.AppConfig) *s3.S3 {
 	return s3.New(sess)
 }
 
-func emptyIntegrationTestFolder(config delegation_backend.AppConfig) error {
+func emptyS3IntegrationTestFolder(config delegation_backend.AppConfig) error {
 	log.Printf("Emptying AWS S3 integration_test folder")
 
 	bucketName := getAWSBucketName(config)
@@ -123,19 +123,23 @@ func waitUntilS3BucketHasBlocksAndSubmissions(config delegation_backend.AppConfi
 			hasBlocks = false
 			hasSubmissionsForToday = false
 
-			// Check the objects
-			for _, object := range objects.Contents {
-				key := *object.Key
-				if strings.HasPrefix(key, folderPrefix+"blocks/") && strings.HasSuffix(key, ".dat") {
-					hasBlocks = true
-				}
-				if strings.HasPrefix(key, folderPrefix+"submissions/"+currentDate+"/") && strings.HasSuffix(key, ".json") {
-					hasSubmissionsForToday = true
+			if len(objects.Contents) > 1 {
+				log.Printf("Found objects in the S3 bucket. Checking for blocks and submissions...")
+				// Check the objects
+				for _, object := range objects.Contents {
+					key := *object.Key
+					if strings.HasPrefix(key, folderPrefix+"blocks/") && strings.HasSuffix(key, ".dat") {
+						hasBlocks = true
+					}
+					if strings.HasPrefix(key, folderPrefix+"submissions/"+currentDate+"/") && strings.HasSuffix(key, ".json") {
+						hasSubmissionsForToday = true
+					}
 				}
 			}
 
 			// If both blocks and submissions for today are found, return
 			if hasBlocks && hasSubmissionsForToday {
+				log.Printf("Found blocks and submissions for today")
 				return nil
 			}
 		}
