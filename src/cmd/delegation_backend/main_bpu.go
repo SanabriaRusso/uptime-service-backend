@@ -46,7 +46,9 @@ func main() {
 		}
 	} else if appCfg.LocalFileSystem != nil {
 		log.Infof("storage backend: Local File System")
-		// future implementation of local file system storage
+		app.Save = func(objs ObjectsToSave) {
+			LocalFileSystemSave(objs, appCfg.LocalFileSystem.Path, log)
+		}
 	} else if appCfg.Database != nil {
 		log.Infof("storage backend: Database")
 		// future implementation of database storage

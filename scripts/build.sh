@@ -27,7 +27,7 @@ case "$1" in
     ;;
   integration-test)
     cd src/integration_tests
-    $GO test -v
+    $GO test -v --timeout 30m
     ;;
   docker)
     if [[ "$TAG" == "" ]]; then

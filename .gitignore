@@ -24,6 +24,6 @@ result/
 # Dependency directories (remove the comment below to include it)
 # vendor/
 
-app_config.json
+app_config*.json
 aws_creds.json
 minasheets.json
