@@ -97,12 +97,16 @@ which to look for submissions.
 Additionally the following optional variables may be defined:
 * `CONFIG_IGNORE_IPS` – if set to `1`, it tells the program to ignore
   submissions' IP addresses and ports (see above)
+* `CONFIG_STDOUT` - if set to `1`, program outputs the CSV to stdout.
+* `CONFIG_LOCAL_OUTPUT` - a filename to which save the CSV.
+* `CONFIG_S3_BUCKET` - AWS S3 bucket, to which upload the data.
+* `CONFIG_S3_KEY` – a key in the AWS S3 bucket to which upload the data.
 * `CONFIG_PERIOD_START`
 * `CONFIG_PERIOD_END`
 * `CONFIG_PERIOD_INTERVAL`
 
-For the explanation on the execution period, see the relevant section
-below.
+For the explanation on the execution period and output, see the
+relevant section below.
 
 JSON file configuration
 -----------------------
@@ -123,7 +127,13 @@ configuration file. The configuration file can look like this:
     "interval": 720
   },
   "network_name": "pre-itn-1",
-  "ignore_ips": true
+  "ignore_ips": true,
+  "output": {
+    "stdout": "true",
+    "local": "/home/user/uptime-data/uptime_2023-10-30.csv",
+    "s3_bucket": "673156464838-block-producers-uptime",
+    "s3_key": "berkeley/summary_2023-10-30.csv"
+  }
 }
 ```
 All the fields under `aws` key as well as `network_name` are mandatory.
@@ -131,7 +141,8 @@ Failing to specify them will result in an error.
 
 The field `ignore_ips` is optional and defaults to `false`.
 
-For explanation regarding `period`, see below.
+For explanation regarding `period` and `output` see the relevant
+section below.
 
 Execution period
 ----------------
@@ -158,3 +169,22 @@ default values (see above).
 data from multiple days, that feature is not implemented. If the
 execution period spans over multiple days, only data from the
 **first** day will be analysed.
+
+Output
+------
+
+There are 3 basic ways the program can output its results:
+* to standard output;
+* to a local CSV file;
+* to a CSV file in AWS S3 bucket.
+
+The standard output is controlled with a simple boolean flag.
+If a local file is set, the data will also be output to that
+file. If it already exists, its contents will be truncated.
+The AWS S3 location is specified with 2 variables: the bucket
+and the key. Either both of them must be set or neither;
+otherwise the program will signal an error. If AWS location is
+properly set, the output file will be uploaded to S3 just
+before the program terminates. If no local file has been
+selected, the program will output to a temporary file and
+upload that.
