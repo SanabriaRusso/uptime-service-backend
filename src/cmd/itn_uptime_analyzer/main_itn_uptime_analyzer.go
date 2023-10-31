@@ -43,7 +43,7 @@ func main() {
 		case appCfg.Output.Local != "":
 		    outputFile, err = os.Create(appCfg.Output.Local)
 
-		// AppConfig already ensures that if S3 key is specied, bucket name is also specified.
+		// AppConfig already ensures that if S3 key is specified, bucket name is also specified.
 		case appCfg.Output.S3Key != "":
 		    outputFile, err = os.CreateTemp("", "itn_uptime_*.csv")
 	}
