@@ -73,11 +73,11 @@ func GetPeriodConfig(periodStart *time.Time, periodEnd *time.Time,
 		    start = *periodStart
 		    end = *periodEnd
         case periodStart != nil && executionInterval != nil:
-            interval = *executionInterval * time.Minute
+            interval = *executionInterval
             end = periodStart.Add(interval)
 		    start = *periodStart
         case periodEnd != nil && executionInterval != nil:
-            interval = *executionInterval * time.Minute
+            interval = *executionInterval
             start = periodEnd.Add(-interval)
 		    end = *periodEnd
 
@@ -90,7 +90,7 @@ func GetPeriodConfig(periodStart *time.Time, periodEnd *time.Time,
 		    interval = time.Hour * 12
             start = periodEnd.Add(-interval)
         case executionInterval != nil:
-            interval = *executionInterval * time.Minute
+            interval = *executionInterval
             end = DefaultEndTime()
             start = end.Add(-interval)
 

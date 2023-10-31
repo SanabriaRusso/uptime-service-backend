@@ -113,11 +113,8 @@ func parseTime(raw string) (time.Time, error) {
 
 func parseDuration(raw string) (time.Duration, error) {
     t, err := strconv.ParseInt(raw, 10, 64)
-    if err != nil {
-        return time.Duration(t) * time.Minute, nil
-    } else {
-        return time.Duration(0), err
-    }
+	ret := time.Duration(t) * time.Minute
+	return ret, err
 }
 
 func unlessDefault[T comparable](value T, defaultVal T) *T {

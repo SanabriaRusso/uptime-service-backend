@@ -48,11 +48,10 @@ func main() {
 		    outputFile, err = os.CreateTemp("", "itn_uptime_*.csv")
 	}
 	if err != nil {
-		log.Fatalf("Error creating output file: %v\n", err)
+		log.Fatalf("Error creating output file: %v", err)
 	}
 	if outputFile != nil {
 		defer outputFile.Close()
-		fmt.Printf("Output file: %v\n", outputFile.Name())
 	}
 
 	var output func(string)
@@ -69,7 +68,7 @@ func main() {
 				outputFile.WriteString(msg)
 			}
 		default:
-		    log.Fatalf("No output specified!\n")
+		    log.Fatalf("No output specified!")
 	}
 
     app := new(dg.App)
@@ -103,18 +102,20 @@ func main() {
         }
     }
 
-	// AppConfig already ensures that is S3Key is sety, S3Bucket is set as well.
+	// AppConfig already ensures that is S3Key is set, S3Bucket is set as well.
 	if appCfg.Output.S3Key != "" {
+		// AWS SDK is not smart enough to rewind the file, so we have to do it manually.
 		_, err := outputFile.Seek(0, 0)
-		result, err := client.PutObject(ctx, &s3.PutObjectInput{
+		if err != nil {
+			log.Fatalf("File read error before upload: %v\n", err)
+		} 
+		_, err = client.PutObject(ctx, &s3.PutObjectInput{
 			Bucket: aws.String(appCfg.Output.S3Bucket),
 			Key: aws.String(appCfg.Output.S3Key),
 			Body: outputFile,
 		})
 		if err != nil {
 			log.Fatalf("Error uploading file to S3: %v\n", err)
-		} else {
-			log.Infof("File uploaded to S3: %v\n", result)
-		}
+		} 
 	}
 }
