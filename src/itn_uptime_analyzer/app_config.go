@@ -27,7 +27,18 @@ func loadAwsCredentials(filename string, log logging.EventLogger) {
     os.Setenv("AWS_SECRET_ACCESS_KEY", credentials.SecretAccessKey)
 }
 
+/* This module uses a declarative approach to defining configuration options.
+   Below you'll find the Option type which represents a configuration option
+   or sometimes a logical group of options. Each of them contains 2 functions:
+   updateJSON and updateFromEnv, which correspond to 2 methods of loading
+   configuration: config file and environment variables. Each of these methods
+   is responsible for parsing the option if necessary and also for validating
+   that it contains an acceptable value. One of those functions (depending
+   on the configuration method chosen) will be called for each option in turn.
+   After all of them have been executed, we know that the configuration is
+   sane and can be used to execute the program. */
 func LoadEnv(log logging.EventLogger) AppConfig {
+    // The list of available options. They're defined below.
     Options := [8]Option { NetworkName, AwsRegion, AwsAccountId, IgnoreIPs,
 		StdOut, LocalOutput, S3Output, Period }
     var config AppConfig
@@ -88,13 +99,24 @@ type AwsCredentials struct {
     SecretAccessKey string `json:"secret_access_key"`
 }
 
+/* The Option type abstracts away a configuration setting. It defines two functions
+   to parse and validate inputs going in through a JSON file or environment variables.
+   In order to define a new option, create another value of this type and add it
+   to the list at the top of the LoadEnv function. Each function takes a config to
+   update and a logger for logging possible errors. It's meant to update the provided
+   config in place either based on values already in there or on an environment
+   variable. */
 type Option struct {
     updateJSON func (logging.EventLogger, *AppConfig)
     updateFromEnv func(logging.EventLogger, *AppConfig)
 }
 
+// The simplest update function, which does nothing.
 func noop(log logging.EventLogger, config *AppConfig) {}
 
+/* getEnvParsed(log, parser, name) reads the value of the name environment variable,
+   parses it using parser and returns the result or error. If the variable is not
+   defined, returns nil instead. */
 func getEnvParsed[T any](log logging.EventLogger, parser func(string) (T, error), name string) *T {
     raw := os.Getenv(name)
     if raw == "" {
@@ -124,6 +146,8 @@ func unlessDefault[T comparable](value T, defaultVal T) *T {
     return &value
 }
 
+/* A typical bool option. Does not require any validation. Accepts values
+   0 or 1 in the environment. Any other value raises an error. */
 func boolOption(envVar string, set func (bool, *AppConfig)) Option {
 	return Option {
 		updateJSON: noop,
@@ -140,6 +164,9 @@ func boolOption(envVar string, set func (bool, *AppConfig)) Option {
 	}
 }
 
+/* A typical string option. Does not require any validation or parsing. If defVal is
+   specified, it is taken if the value is not found in the environment. Otherwise,
+   the value is required and program fails in its absence.  */
 func stringOption(envVar string, defVal *string, set func (string, *AppConfig)) Option {
 	return Option {
 		updateJSON: noop,
@@ -154,6 +181,7 @@ func stringOption(envVar string, defVal *string, set func (string, *AppConfig)) 
 	}
 }
 
+// Actual Options are defined below. Most are simple string and boolean options.
 var (
 	empty = ""
 
@@ -199,6 +227,10 @@ var (
 		},
 	}
 
+	/* This option actually manages 3 settings, which are coupled together to define the
+       temporal scope of the program. If all 3 are specified, an invariant that the interval
+       fits exactly between period's start and end must hold. If any 2 or just one of them
+       is defined, other values are inferred accordingly. */
     Period = Option {
         updateJSON: func (log logging.EventLogger, cfg *AppConfig) {
             // 1st Jan 0001 is the default value, which appears if it is absent
