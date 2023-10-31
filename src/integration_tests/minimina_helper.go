@@ -60,6 +60,32 @@ func miniminaNetworkDelete(network string) {
 	}
 }
 
+func miniminaNodeStop(network string, node string) {
+	log.Printf("Stopping node %s of network %s", node, network)
+	cmd := exec.Command("minimina", "node", "stop", "-n", network, "-i", node)
+
+	// cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+
+	err := cmd.Run()
+	if err != nil {
+		log.Fatalf("failed to execute command: %v", err)
+	}
+}
+
+func miniminaNodeStart(network string, node string) {
+	log.Printf("Starting node %s of network %s", node, network)
+	cmd := exec.Command("minimina", "node", "start", "-n", network, "-i", node)
+
+	// cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+
+	err := cmd.Run()
+	if err != nil {
+		log.Fatalf("failed to execute command: %v", err)
+	}
+}
+
 type NetworkStatus struct {
 	NetworkDir string `json:"network_dir"`
 }
