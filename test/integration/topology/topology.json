@@ -91,7 +91,6 @@
     "uptime-service-backend": {
         "role": "Uptime_service_backend",
         "app_config_path": "../../test/integration/topology/uptime_service_config/app_config.json",
-        "aws_credentials_path": "../../test/integration/topology/uptime_service_config/aws_creds.json",
         "minasheets_path": "../../test/integration/topology/uptime_service_config/minasheets.json",
         "docker_image": "uptime-service-backend:integration-test"
     },
