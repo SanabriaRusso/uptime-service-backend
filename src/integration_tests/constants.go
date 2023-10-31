@@ -26,15 +26,15 @@ func getDirFiles(dir string, suffix string) ([]string, error) {
 		return nil, err
 	}
 
-	var gpgFiles []string
+	var filteredFiles []string
 	for _, f := range files {
 		if strings.HasSuffix(f.Name(), suffix) {
 			absolutePath := dir + "/" + f.Name()
-			gpgFiles = append(gpgFiles, absolutePath)
+			filteredFiles = append(filteredFiles, absolutePath)
 		}
 	}
 
-	return gpgFiles, nil
+	return filteredFiles, nil
 }
 
 func getGpgFiles(dir string) ([]string, error) {
