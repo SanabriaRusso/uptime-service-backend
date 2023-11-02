@@ -15,6 +15,11 @@ import (
 // Operation is a function type that represents an operation that might fail and need a retry.
 type Operation func() error
 
+const (
+	maxRetries     = 20
+	initialBackoff = 1 * time.Second
+)
+
 // ExponentialBackoff retries the provided operation with an exponential backoff strategy.
 func ExponentialBackoff(operation Operation, maxRetries int, initialBackoff time.Duration) error {
 	backoff := initialBackoff
@@ -65,16 +70,40 @@ func InitializeKeyspaceSession(config *AwsKeyspacesConfig) (*gocql.Session, erro
 	return session, nil
 }
 
+func WaitForTablesActive(config *AwsKeyspacesConfig, tables []string) error {
+	log.Printf("Waiting for tables %v to be active...", tables)
+	operation := func() error {
+		for _, tableName := range tables {
+			session, err := InitializeKeyspaceSession(config)
+			if err != nil {
+				return err
+			}
+			defer session.Close()
+
+			// Check if the table exists
+			query := fmt.Sprintf("SELECT * FROM %s.%s LIMIT 1", config.Keyspace, tableName)
+			if err := session.Query(query).Consistency(gocql.One).Exec(); err != nil {
+				return err
+			}
+
+		}
+		return nil
+	}
+
+	return ExponentialBackoff(operation, maxRetries, initialBackoff)
+}
+
 func createSchemaMigrationsTableIfNotExists(session *gocql.Session, keyspace string) error {
 	query := fmt.Sprintf(`CREATE TABLE IF NOT EXISTS %s.schema_migrations (version bigint PRIMARY KEY, dirty boolean);`, keyspace)
 	operation := func() error {
 		return session.Query(query).Exec()
 	}
 
-	return ExponentialBackoff(operation, 5, 5*time.Second)
+	return ExponentialBackoff(operation, maxRetries, initialBackoff)
 }
 
 func DropAllTables(config *AwsKeyspacesConfig) error {
+	log.Print("Dropping all tables...")
 	operation := func() error {
 		session, err := InitializeKeyspaceSession(config)
 		if err != nil {
@@ -97,7 +126,7 @@ func DropAllTables(config *AwsKeyspacesConfig) error {
 		return nil
 	}
 
-	return ExponentialBackoff(operation, 5, 5*time.Second)
+	return ExponentialBackoff(operation, maxRetries, initialBackoff)
 
 }
 
@@ -138,7 +167,7 @@ func MigrationUp(config *AwsKeyspacesConfig, migrationPath string) error {
 		return nil
 	}
 
-	return ExponentialBackoff(operation, 5, 5*time.Second)
+	return ExponentialBackoff(operation, maxRetries, initialBackoff)
 
 }
 
@@ -173,5 +202,5 @@ func MigrationDown(config *AwsKeyspacesConfig, migrationPath string) error {
 		return nil
 	}
 
-	return ExponentialBackoff(operation, 5, 5*time.Second)
+	return ExponentialBackoff(operation, maxRetries, initialBackoff)
 }

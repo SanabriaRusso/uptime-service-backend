@@ -21,3 +21,9 @@ integration-test:
 
 docker:
 	./scripts/build.sh $@
+
+db-migrate-up:
+	GO=$(GO) ./scripts/build.sh db-migrate-up
+
+db-migrate-down:
+	GO=$(GO) ./scripts/build.sh db-migrate-down
