@@ -54,6 +54,30 @@ func TestIntegration_BP_Uptime_Storage(t *testing.T) {
 		t.Fatalf("Failed to wait until S3 bucket is not empty: %v", err)
 	}
 
+	// // 3. Test AWS Keyspaces Storage
+	// log.Printf(" >>> 3. Test AWS Keyspaces Storage")
+	// setAppConfig("aws_keyspaces")
+	// config = getAppConfig()
+	// config.AwsKeyspaces.SSLCertificatePath = AWS_SSL_CERTIFICATE_PATH
+	// err = dg.MigrationUp(config.AwsKeyspaces, DATABASE_MIGRATION_DIR)
+	// if err != nil {
+	// 	t.Fatalf("Failed to migrate up: %v", err)
+	// }
+	// defer dg.DropAllTables(config.AwsKeyspaces)
+
+	// tables := []string{"schema_migrations", "submissions", "blocks"}
+	// err = dg.WaitForTablesActive(config.AwsKeyspaces, tables)
+	// if err != nil {
+	// 	t.Fatalf("Failed to wait for tables to be active: %v", err)
+	// }
+
+	// config = getAppConfig()
+	// miniminaNodeStop(networkName, "uptime-service-backend")
+	// copyFile(APP_CONFIG_FILE, networkDir+"/uptime_service_config/app_config.json")
+	// miniminaNodeStart(networkName, "uptime-service-backend")
+
+	// testing goes here
+
 	defer miniminaNetworkStop(networkName)
 	defer emptyLocalFilesystemStorage(uptimeStorageDir)
 	defer emptyS3IntegrationTestFolder(config)
