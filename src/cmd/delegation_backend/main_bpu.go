@@ -49,8 +49,8 @@ func main() {
 		app.Save = func(objs ObjectsToSave) {
 			LocalFileSystemSave(objs, appCfg.LocalFileSystem.Path, log)
 		}
-	} else if appCfg.Database != nil {
-		log.Infof("storage backend: Database")
+	} else if appCfg.AwsKeyspaces != nil {
+		log.Infof("storage backend: Aws Keyspaces")
 		// future implementation of database storage
 	} else {
 		log.Fatal("No storage backend configured!")
