@@ -51,7 +51,21 @@ func main() {
 		}
 	} else if appCfg.AwsKeyspaces != nil {
 		log.Infof("storage backend: Aws Keyspaces")
-		// future implementation of database storage
+		session, err := InitializeKeyspaceSession(appCfg.AwsKeyspaces)
+		if err != nil {
+			log.Fatalf("Error initializing Keyspace session: %v", err)
+		}
+		defer session.Close()
+
+		kc := KeyspaceContext{
+			Session:  session,
+			Keyspace: appCfg.AwsKeyspaces.Keyspace,
+			Context:  ctx,
+			Log:      log,
+		}
+		app.Save = func(objs ObjectsToSave) {
+			kc.KeyspaceSave(objs)
+		}
 	} else {
 		log.Fatal("No storage backend configured!")
 	}
