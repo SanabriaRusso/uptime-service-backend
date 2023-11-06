@@ -54,9 +54,90 @@ Backend Service is a web server that exposes the following entrypoints:
         - `503 Service Unavailable` when IP-based rate-limiting prohibits the request
         - `200` with `{"status": "ok"}`
 
-## Cloud storage
+## Configuration
 
-Cloud storage has the following structure:
+The program can be configured using either a JSON configuration file or environment variables. Below is the comprehensive guide on how to configure each option.
+
+### Configuration Using a JSON File
+
+1. **Set Configuration File Path**:
+   Set the environment variable `CONFIG_FILE` to the path of your JSON configuration file.
+
+2. **JSON Configuration Structure**:
+   Your JSON file should adhere to the structure specified by the `AppConfig` struct in Go. Here is an example structure:
+
+```json
+{
+  "network_name": "your_network_name",
+  "gsheet_id": "your_google_sheet_id",
+  "delegation_whitelist_list": "your_whitelist_list",
+  "delegation_whitelist_column": "your_whitelist_column",
+  // provide one of the below options
+  "aws": {
+    "account_id": "your_aws_account_id",
+    "bucket_name_suffix": "your_bucket_name_suffix",
+    "region": "your_aws_region",
+    "access_key_id": "your_aws_access_key_id",
+    "secret_access_key": "your_aws_secret_access_key"
+  },
+  "aws_keyspaces": {
+    "keyspace": "your_aws_keyspace",
+    "region": "your_aws_region",
+    "access_key_id": "your_aws_access_key_id",
+    "secret_access_key": "your_aws_secret_access_key",
+    "ssl_certificate_path": "your_aws_ssl_certificate_path"
+  },
+  "filesystem": {
+    "path": "your_filesystem_path"
+  }
+}
+```
+
+### Configuration Using Environment Variables
+
+If the `CONFIG_FILE` environment variable is not set, the program will fall back to loading configuration from environment variables.
+
+1. **General Configuration**:
+   - `CONFIG_NETWORK_NAME` - Set this to your network name.
+   - `CONFIG_GSHEET_ID` - Set this to your Google Sheet ID.
+   - `DELEGATION_WHITELIST_LIST` - Set this to your delegation whitelist list.
+   - `DELEGATION_WHITELIST_COLUMN` - Set this to your delegation whitelist column.
+
+2. **AWS S3 Configuration**:
+   - `AWS_ACCOUNT_ID` - Your AWS Account ID.
+   - `AWS_BUCKET_NAME_SUFFIX` - Suffix for the AWS S3 bucket name.
+   - `AWS_REGION` - The AWS region.
+   - `AWS_ACCESS_KEY_ID` - Your AWS Access Key ID.
+   - `AWS_SECRET_ACCESS_KEY` - Your AWS Secret Access Key.
+
+3. **AWS Keyspaces Configuration**:
+   - `AWS_KEYSPACE` - Your AWS Keyspace name.
+   - `AWS_REGION` - The AWS region (same as used for S3).
+   - `AWS_ACCESS_KEY_ID` - Your AWS Access Key ID (same as used for S3).
+   - `AWS_SECRET_ACCESS_KEY` - Your AWS Secret Access Key (same as used for S3).
+   - `AWS_SSL_CERTIFICATE_PATH` - The path to your SSL certificate for AWS Keyspaces.
+
+4. **Local File System Configuration**:
+   - `CONFIG_FILESYSTEM_PATH` - Set this to the path where you want the local file system to point.
+
+### Important Notes
+
+- Only one of `AwsS3`, `AwsKeyspaces`, or `LocalFileSystem` configurations should be provided. If more than one is provided, the program will terminate with an error.
+- Ensure that all necessary environment variables are set. If any required variable is missing, the program will terminate with an error.
+- Using `AWSKeyspaces` for the first time requires running database migration script in order to create necessary tables. After `AWSKeyspaces` is properly set on the environment, one can run database migration using the provided script:
+
+```bash
+$ nix-shell
+[nix-shell]$ make db-migrate-up
+```
+
+Once you have set up your configuration using either a JSON file or environment variables, you can proceed to run the program. The program will automatically load the configuration and initialize based on the provided settings.
+
+## Storage
+
+Based on storage option used in config the program will store blocks and submissions either in local filesystem, AWS S3 or Cassandra database in AWS Keyspaces.
+
+The AWS S3 and filesystem storage has the following structure:
 
 - `submissions`
     - `<submitted_at_date>/<submitted_at>-<submitter>.json`
@@ -74,6 +155,8 @@ Cloud storage has the following structure:
 - `blocks`
     - `<block-hash>.dat`
         - Contains raw block
+
+In case of AWS Keyspaces the storage is kept in two tables `blocks` and `submissions`. The structure of the tables can be found in [/database/migrations](/database/migrations).
 
 ## Validation and rate limitting
 
