@@ -178,29 +178,6 @@ func (kc *KeyspaceContext) KeyspaceSave(objs ObjectsToSave) {
 	}
 }
 
-func WaitForTablesActive(config *AwsKeyspacesConfig, tables []string) error {
-	log.Printf("Waiting for tables %v to be active...", tables)
-	operation := func() error {
-		for _, tableName := range tables {
-			session, err := InitializeKeyspaceSession(config)
-			if err != nil {
-				return err
-			}
-			defer session.Close()
-
-			// Check if the table exists
-			query := fmt.Sprintf("SELECT * FROM %s.%s LIMIT 1", config.Keyspace, tableName)
-			if err := session.Query(query).Consistency(gocql.One).Exec(); err != nil {
-				return err
-			}
-
-		}
-		return nil
-	}
-
-	return ExponentialBackoff(operation, 15, initialBackoff)
-}
-
 func createSchemaMigrationsTableIfNotExists(session *gocql.Session, keyspace string) error {
 	query := fmt.Sprintf(`CREATE TABLE IF NOT EXISTS %s.schema_migrations (version bigint PRIMARY KEY, dirty boolean);`, keyspace)
 	operation := func() error {
