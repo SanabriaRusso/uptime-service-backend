@@ -26,4 +26,5 @@ result/
 
 app_config*.json
 aws_creds.json
+config.sh
 minasheets.json
