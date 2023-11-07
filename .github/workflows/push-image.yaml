@@ -1,0 +1,67 @@
+---
+name: Build and push image to ECR
+
+on:
+  workflow_dispatch:
+    inputs:
+      network_name:
+        description: "Enter the Network Name (berkeley or mainnet)"
+        required: true
+        type: string
+        default: mainnet
+      docker_base_tag_prefix:
+        description: "Enter the Base Tag Prefix (e.g itn-preprod)"
+        required: true
+        type: string
+env:
+  NETWORK_NAME: ${{ github.event.inputs.network_name }}
+  DOCKER_BASE_TAG_PREFIX: ${{ github.event.inputs.docker_base_tag_prefix }}
+  FUNCTIONS: ./.github/workflows/helpers/functions.sh
+  VARIABLES: ./.github/workflows/helpers/variables.sh
+
+# This allows a subsequently queued workflow run to interrupt previous runs
+concurrency:
+  group: '${{ github.workflow }} @ ${{ github.event.pull_request.head.label || github.head_ref || github.ref }}'
+  cancel-in-progress: true
+
+jobs:
+  build-docker-image:
+
+    name: Build and push Docker Image
+    runs-on: minafoundation-default-runners
+
+    steps:
+
+      - name: 📥 Checkout
+        uses: actions/checkout@v3    
+
+      - name: 📥 Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
+
+      - name: ⚙ Get Short Commit SHA and Get Image Tag
+        run: |
+          echo "IMAGE_BASE_COMMIT_SHORT=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+          echo "TAG=${{ env.DOCKER_BASE_TAG_PREFIX }}-${{ env.IMAGE_BASE_COMMIT_SHORT }}-${{ env.NETWORK_NAME }}" >> $GITHUB_ENV
+
+      - name: ⚙ Check ECR if Tag already exists
+        run: |
+          source ${{ env.FUNCTIONS }}
+          source ${{ env.VARIABLES }}
+          abort_process_if_image_tag_exists $ECR_REGISTRY_NAME ${{ env.TAG }}
+
+      - name: 📦 Install Nix
+        uses: cachix/install-nix-action@v22
+        with:
+          nix_path: nixpkgs=channel:nixos-unstable
+
+      - name: 🛠️ Build BPU Docker Image
+        run: |
+          nix-shell
+          source ${{ env.VARIABLES }}
+          TAG=${{ env.TAG }} make docker
+
+      - name: 📤 Push BPU Docker Image
+        run: |
+          source ${{ env.VARIABLES }}
+          docker push $ECR_REGISTRY_URL/block-producers-uptime:${{ env.TAG }}
