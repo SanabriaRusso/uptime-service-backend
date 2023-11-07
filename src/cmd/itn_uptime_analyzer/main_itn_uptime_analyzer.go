@@ -1,16 +1,17 @@
 package main
 
 import (
-    dg "block_producers_uptime/delegation_backend"
-    itn "block_producers_uptime/itn_uptime_analyzer"
-    "context"
+	dg "block_producers_uptime/delegation_backend"
+	itn "block_producers_uptime/itn_uptime_analyzer"
+	"context"
+	"fmt"
 	"os"
-    "fmt"
+	"strings"
 
-    "github.com/aws/aws-sdk-go-v2/config"
-    "github.com/aws/aws-sdk-go-v2/service/s3"
-    "github.com/aws/aws-sdk-go/aws"
-    logging "github.com/ipfs/go-log/v2"
+	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"github.com/aws/aws-sdk-go/aws"
+	logging "github.com/ipfs/go-log/v2"
 )
 
 func main() {
@@ -104,6 +105,7 @@ func main() {
 
 	// AppConfig already ensures that is S3Key is set, S3Bucket is set as well.
 	if appCfg.Output.S3Key != "" {
+		outputFileName := strings.Join([]string{*aws.String(appCfg.Output.S3Key), itn.OutputFileName()}, "/")
 		// AWS SDK is not smart enough to rewind the file, so we have to do it manually.
 		_, err := outputFile.Seek(0, 0)
 		if err != nil {
@@ -111,7 +113,7 @@ func main() {
 		} 
 		_, err = client.PutObject(ctx, &s3.PutObjectInput{
 			Bucket: aws.String(appCfg.Output.S3Bucket),
-			Key: aws.String(appCfg.Output.S3Key),
+			Key:    &outputFileName,
 			Body: outputFile,
 		})
 		if err != nil {

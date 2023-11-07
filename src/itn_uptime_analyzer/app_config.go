@@ -1,12 +1,13 @@
 package itn_uptime_analyzer
 
 import (
-    "encoding/json"
-    "os"
-    "strconv"
-    "time"
+	"encoding/json"
+	"os"
+	"strconv"
+	"strings"
+	"time"
 
-    logging "github.com/ipfs/go-log/v2"
+	logging "github.com/ipfs/go-log/v2"
 )
 
 func loadAwsCredentials(filename string, log logging.EventLogger) {
@@ -146,6 +147,12 @@ func unlessDefault[T comparable](value T, defaultVal T) *T {
     return &value
 }
 
+// Get the S3 file name with todays date
+func OutputFileName() string {
+	return strings.Join([]string{"summary_", time.Now().Format("2006-01-02"), ".csv"}, "")
+}
+
+
 /* A typical bool option. Does not require any validation. Accepts values
    0 or 1 in the environment. Any other value raises an error. */
 func boolOption(envVar string, set func (bool, *AppConfig)) Option {
@@ -218,7 +225,7 @@ var (
 		updateFromEnv: func (log logging.EventLogger, cfg *AppConfig) {
 			bucket := os.Getenv("CONFIG_S3_BUCKET")
 			key := os.Getenv("CONFIG_S3_KEY")
-			if (bucket == "") && (key == "") {
+			if (bucket != "") && (key != "") {
 				cfg.Output.S3Bucket = bucket
 				cfg.Output.S3Key = key
 			} else {
