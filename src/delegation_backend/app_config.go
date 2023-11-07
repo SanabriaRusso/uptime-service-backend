@@ -36,9 +36,22 @@ func LoadEnv(log logging.EventLogger) AppConfig {
 		}
 	} else {
 		networkName := getEnvChecked("CONFIG_NETWORK_NAME", log)
-		gsheetId := getEnvChecked("CONFIG_GSHEET_ID", log)
-		delegationWhitelistList := getEnvChecked("DELEGATION_WHITELIST_LIST", log)
-		delegationWhitelistColumn := getEnvChecked("DELEGATION_WHITELIST_COLUMN", log)
+
+		delegationWhitelistDisabled := os.Getenv("DELEGATION_WHITELIST_DISABLED")
+		var gsheetId, delegationWhitelistList, delegationWhitelistColumn string
+		if delegationWhitelistDisabled == "true" {
+			// If delegation whitelist is disabled, we don't need to load related environment variables
+			// just loading them from env in case they are set, but they won't be used
+			gsheetId = os.Getenv("CONFIG_GSHEET_ID")
+			delegationWhitelistList = os.Getenv("DELEGATION_WHITELIST_LIST")
+			delegationWhitelistColumn = os.Getenv("DELEGATION_WHITELIST_COLUMN")
+		} else {
+			// If delegation whitelist is enabled, we need to load related environment variables
+			// program will terminate if any of them is missing
+			gsheetId = getEnvChecked("CONFIG_GSHEET_ID", log)
+			delegationWhitelistList = getEnvChecked("DELEGATION_WHITELIST_LIST", log)
+			delegationWhitelistColumn = getEnvChecked("DELEGATION_WHITELIST_COLUMN", log)
+		}
 
 		// AWS configurations
 		if accessKeyId := os.Getenv("AWS_ACCESS_KEY_ID"); accessKeyId != "" {
@@ -77,6 +90,7 @@ func LoadEnv(log logging.EventLogger) AppConfig {
 		config.GsheetId = gsheetId
 		config.DelegationWhitelistList = delegationWhitelistList
 		config.DelegationWhitelistColumn = delegationWhitelistColumn
+		config.DelegationWhitelistDisabled = delegationWhitelistDisabled == "true"
 	}
 
 	// Check that only one of Aws, Database, or LocalFileSystem is provided
@@ -124,11 +138,12 @@ type LocalFileSystemConfig struct {
 }
 
 type AppConfig struct {
-	NetworkName               string                 `json:"network_name"`
-	GsheetId                  string                 `json:"gsheet_id"`
-	DelegationWhitelistList   string                 `json:"delegation_whitelist_list"`
-	DelegationWhitelistColumn string                 `json:"delegation_whitelist_column"`
-	Aws                       *AwsConfig             `json:"aws,omitempty"`
-	Database                  *DatabaseConfig        `json:"database,omitempty"`
-	LocalFileSystem           *LocalFileSystemConfig `json:"filesystem,omitempty"`
+	NetworkName                 string                 `json:"network_name"`
+	GsheetId                    string                 `json:"gsheet_id"`
+	DelegationWhitelistList     string                 `json:"delegation_whitelist_list"`
+	DelegationWhitelistColumn   string                 `json:"delegation_whitelist_column"`
+	DelegationWhitelistDisabled bool                   `json:"delegation_whitelist_disabled,omitempty"`
+	Aws                         *AwsConfig             `json:"aws,omitempty"`
+	Database                    *DatabaseConfig        `json:"database,omitempty"`
+	LocalFileSystem             *LocalFileSystemConfig `json:"filesystem,omitempty"`
 }
