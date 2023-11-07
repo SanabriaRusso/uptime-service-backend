@@ -48,7 +48,7 @@ jobs:
         run: |
           source ${{ env.FUNCTIONS }}
           source ${{ env.VARIABLES }}
-          abort_process_if_image_tag_exists $ECR_REGISTRY_URL ${{ env.TAG }}
+          abort_process_if_image_tag_exists $ECR_REGISTRY_NAME ${{ env.TAG }}
 
       - name: 📦 Install Nix
         uses: cachix/install-nix-action@v22
@@ -59,7 +59,6 @@ jobs:
         run: |
           nix-shell
           source ${{ env.VARIABLES }}
-          IMAGE_NAME=$ECR_REGISTRY_URL
           TAG=${{ env.TAG }} make docker
 
       - name: 📤 Push BPU Docker Image
