@@ -37,9 +37,9 @@ func LoadEnv(log logging.EventLogger) AppConfig {
 	} else {
 		networkName := getEnvChecked("CONFIG_NETWORK_NAME", log)
 
-		delegationWhitelistDisabled := os.Getenv("DELEGATION_WHITELIST_DISABLED")
+		delegationWhitelistDisabled := boolEnvChecked("DELEGATION_WHITELIST_DISABLED", log)
 		var gsheetId, delegationWhitelistList, delegationWhitelistColumn string
-		if delegationWhitelistDisabled == "true" {
+		if delegationWhitelistDisabled {
 			// If delegation whitelist is disabled, we don't need to load related environment variables
 			// just loading them from env in case they are set, but they won't be used
 			gsheetId = os.Getenv("CONFIG_GSHEET_ID")
@@ -90,7 +90,7 @@ func LoadEnv(log logging.EventLogger) AppConfig {
 		config.GsheetId = gsheetId
 		config.DelegationWhitelistList = delegationWhitelistList
 		config.DelegationWhitelistColumn = delegationWhitelistColumn
-		config.DelegationWhitelistDisabled = delegationWhitelistDisabled == "true"
+		config.DelegationWhitelistDisabled = delegationWhitelistDisabled
 	}
 
 	// Check that only one of Aws, Database, or LocalFileSystem is provided
@@ -118,6 +118,21 @@ func getEnvChecked(variable string, log logging.EventLogger) string {
 		log.Fatalf("missing %s environment variable", variable)
 	}
 	return value
+}
+
+func boolEnvChecked(variable string, log logging.EventLogger) bool {
+	value := os.Getenv(variable)
+	switch value {
+	case "1":
+		return true
+	case "0":
+		return false
+	case "":
+		return false
+	default:
+		log.Fatalf("%s, if set, should be either 0 or 1!", variable)
+		return false
+	}
 }
 
 type AwsConfig struct {

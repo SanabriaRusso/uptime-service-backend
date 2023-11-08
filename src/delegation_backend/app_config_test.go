@@ -292,7 +292,7 @@ func TestLoadEnv(t *testing.T) {
 	t.Run("delegation whitelist disabled - env", func(t *testing.T) {
 		os.Clearenv()
 		os.Setenv("CONFIG_NETWORK_NAME", "test_network")
-		os.Setenv("DELEGATION_WHITELIST_DISABLED", "true")
+		os.Setenv("DELEGATION_WHITELIST_DISABLED", "1")
 		os.Setenv("CONFIG_FILESYSTEM_PATH", "test_path")
 
 		config := LoadEnv(mockLogger)
