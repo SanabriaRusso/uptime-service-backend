@@ -113,7 +113,7 @@ func LoadEnv(log logging.EventLogger) AppConfig {
 		configCount++
 	}
 
-	if configCount != 1 {
+	if configCount > 1 {
 		log.Fatalf("Error: You can only provide one of AwsS3, AwsKeyspaces, or LocalFileSystem configurations.")
 	}
 

@@ -240,6 +240,7 @@ func TestLoadEnv(t *testing.T) {
 	})
 
 	t.Run("multiple configs error from env", func(t *testing.T) {
+		os.Clearenv()
 		// Set env variables for both AWS and Database
 		os.Setenv("CONFIG_NETWORK_NAME", "test_network")
 		os.Setenv("CONFIG_GSHEET_ID", "test_gsheet_id")
@@ -247,15 +248,14 @@ func TestLoadEnv(t *testing.T) {
 		os.Setenv("DELEGATION_WHITELIST_COLUMN", "test_column")
 
 		os.Setenv("AWS_ACCESS_KEY_ID", "test_access_key_id")
-		os.Setenv("AWS_ACCESS_KEY_ID", "test_access_key_id")
 		os.Setenv("AWS_SECRET_ACCESS_KEY", "test_secret_access_key")
-		os.Setenv("CONFIG_AWS_REGION", "test_region")
-		os.Setenv("CONFIG_AWS_ACCOUNT_ID", "test_account_id")
-		os.Setenv("CONFIG_BUCKET_NAME_SUFFIX", "test_suffix")
+		os.Setenv("AWS_REGION", "test_region")
+		os.Setenv("AWS_ACCOUNT_ID", "test_account_id")
+		os.Setenv("AWS_BUCKET_NAME_SUFFIX", "test_suffix")
 
-		os.Setenv("CONFIG_AWS_KEYSPACE", "test_keyspace")
+		os.Setenv("AWS_KEYSPACE", "test_keyspace")
+		os.Setenv("AWS_SSL_CERTIFICATE_PATH", "test_ssl_cert")
 
-		LoadEnv(mockLogger)
 		if mockLogger.lastMessage != "Error: You can only provide one of AwsS3, AwsKeyspaces, or LocalFileSystem configurations." {
 			t.Errorf("Expected to get an error for multiple configs but didn't. Message: %s", mockLogger.lastMessage)
 		}
