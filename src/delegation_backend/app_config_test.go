@@ -256,6 +256,7 @@ func TestLoadEnv(t *testing.T) {
 		os.Setenv("AWS_KEYSPACE", "test_keyspace")
 		os.Setenv("AWS_SSL_CERTIFICATE_PATH", "test_ssl_cert")
 
+		LoadEnv(mockLogger)
 		if mockLogger.lastMessage != "Error: You can only provide one of AwsS3, AwsKeyspaces, or LocalFileSystem configurations." {
 			t.Errorf("Expected to get an error for multiple configs but didn't. Message: %s", mockLogger.lastMessage)
 		}
