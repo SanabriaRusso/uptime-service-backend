@@ -164,12 +164,12 @@ type LocalFileSystemConfig struct {
 }
 
 type AppConfig struct {
-	NetworkName               string                 `json:"network_name"`
-	GsheetId                  string                 `json:"gsheet_id"`
-	DelegationWhitelistList   string                 `json:"delegation_whitelist_list"`
-	DelegationWhitelistColumn string                 `json:"delegation_whitelist_column"`
+	NetworkName                 string                 `json:"network_name"`
+	GsheetId                    string                 `json:"gsheet_id"`
+	DelegationWhitelistList     string                 `json:"delegation_whitelist_list"`
+	DelegationWhitelistColumn   string                 `json:"delegation_whitelist_column"`
 	DelegationWhitelistDisabled bool                   `json:"delegation_whitelist_disabled,omitempty"`
-	Aws                       *AwsConfig             `json:"aws,omitempty"`
-	AwsKeyspaces              *AwsKeyspacesConfig    `json:"aws_keyspaces,omitempty"`
-	LocalFileSystem           *LocalFileSystemConfig `json:"filesystem,omitempty"`
+	Aws                         *AwsConfig             `json:"aws,omitempty"`
+	AwsKeyspaces                *AwsKeyspacesConfig    `json:"aws_keyspaces,omitempty"`
+	LocalFileSystem             *LocalFileSystemConfig `json:"filesystem,omitempty"`
 }
