@@ -72,6 +72,7 @@ The program can be configured using either a JSON configuration file or environm
   "gsheet_id": "your_google_sheet_id",
   "delegation_whitelist_list": "your_whitelist_list",
   "delegation_whitelist_column": "your_whitelist_column",
+  "delegation_whitelist_disabled": false,
   // provide one of the below options
   "aws": {
     "account_id": "your_aws_account_id",
@@ -99,25 +100,28 @@ If the `CONFIG_FILE` environment variable is not set, the program will fall back
 
 1. **General Configuration**:
    - `CONFIG_NETWORK_NAME` - Set this to your network name.
-   - `CONFIG_GSHEET_ID` - Set this to your Google Sheet ID.
-   - `DELEGATION_WHITELIST_LIST` - Set this to your delegation whitelist list.
-   - `DELEGATION_WHITELIST_COLUMN` - Set this to your delegation whitelist column.
 
-2. **AWS S3 Configuration**:
+2. **Whitelist Configuration**:
+   - `CONFIG_GSHEET_ID` - Set this to your Google Sheet ID with the keys to whitelist.
+   - `DELEGATION_WHITELIST_LIST` - Set this to your delegation whitelist sheet title where the whitelist keys are.
+   - `DELEGATION_WHITELIST_COLUMN` - Set this to your delegation whitelist sheet column where the whitelist keys are.
+   -  Or disable whitelisting alltogether by setting `DELEGATION_WHITELIST_DISABLED=1`. The previous three env variables are then ignored.
+
+3. **AWS S3 Configuration**:
    - `AWS_ACCOUNT_ID` - Your AWS Account ID.
    - `AWS_BUCKET_NAME_SUFFIX` - Suffix for the AWS S3 bucket name.
    - `AWS_REGION` - The AWS region.
    - `AWS_ACCESS_KEY_ID` - Your AWS Access Key ID.
    - `AWS_SECRET_ACCESS_KEY` - Your AWS Secret Access Key.
 
-3. **AWS Keyspaces Configuration**:
+4. **AWS Keyspaces Configuration**:
    - `AWS_KEYSPACE` - Your AWS Keyspace name.
    - `AWS_REGION` - The AWS region (same as used for S3).
    - `AWS_ACCESS_KEY_ID` - Your AWS Access Key ID (same as used for S3).
    - `AWS_SECRET_ACCESS_KEY` - Your AWS Secret Access Key (same as used for S3).
    - `AWS_SSL_CERTIFICATE_PATH` - The path to your SSL certificate for AWS Keyspaces.
 
-4. **Local File System Configuration**:
+5. **Local File System Configuration**:
    - `CONFIG_FILESYSTEM_PATH` - Set this to the path where you want the local file system to point.
 
 ### Important Notes
