@@ -67,21 +67,27 @@ func main() {
 	http.Handle("/v1/submit", app.NewSubmitH())
 
 	// Sheets service and whitelist loop
-	sheetsService, err2 := sheets.NewService(ctx, option.WithScopes(sheets.SpreadsheetsReadonlyScope))
-	if err2 != nil {
-		log.Fatalf("Error creating Sheets service: %v", err2)
-	}
-	initWl := RetrieveWhitelist(sheetsService, log, appCfg)
-	wlMvar := new(WhitelistMVar)
-	wlMvar.Replace(&initWl)
-	app.Whitelist = wlMvar
-	go func() {
-		for {
-			wl := RetrieveWhitelist(sheetsService, log, appCfg)
-			wlMvar.Replace(&wl)
-			time.Sleep(WHITELIST_REFRESH_INTERVAL)
+	app.WhitelistDisabled = appCfg.DelegationWhitelistDisabled
+	if app.WhitelistDisabled {
+		log.Infof("delegation whitelist is disabled")
+	} else {
+		log.Infof("delegation whitelist is enabled")
+		sheetsService, err2 := sheets.NewService(ctx, option.WithScopes(sheets.SpreadsheetsReadonlyScope))
+		if err2 != nil {
+			log.Fatalf("Error creating Sheets service: %v", err2)
 		}
-	}()
+		initWl := RetrieveWhitelist(sheetsService, log, appCfg)
+		wlMvar := new(WhitelistMVar)
+		wlMvar.Replace(&initWl)
+		app.Whitelist = wlMvar
+		go func() {
+			for {
+				wl := RetrieveWhitelist(sheetsService, log, appCfg)
+				wlMvar.Replace(&wl)
+				time.Sleep(WHITELIST_REFRESH_INTERVAL)
+			}
+		}()
+	}
 
 	// Start server
 	log.Fatal(http.ListenAndServe(DELEGATION_BACKEND_LISTEN_TO, nil))

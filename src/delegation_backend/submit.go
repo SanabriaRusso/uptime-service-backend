@@ -90,11 +90,12 @@ type AwsContext struct {
 }
 
 type App struct {
-	Log           *logging.ZapEventLogger
-	SubmitCounter *AttemptCounter
-	Whitelist     *WhitelistMVar
-	Save          func(ObjectsToSave)
-	Now           nowFunc
+	Log               *logging.ZapEventLogger
+	SubmitCounter     *AttemptCounter
+	Whitelist         *WhitelistMVar
+	WhitelistDisabled bool
+	Save              func(ObjectsToSave)
+	Now               nowFunc
 }
 
 type SubmitH struct {
@@ -152,11 +153,13 @@ func (h *SubmitH) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	wl := h.app.Whitelist.ReadWhitelist()
-	if (*wl)[req.Submitter] == nil {
-		w.WriteHeader(401)
-		writeErrorResponse(h.app, &w, "Submitter is not registered")
-		return
+	if !h.app.WhitelistDisabled {
+		wl := h.app.Whitelist.ReadWhitelist()
+		if (*wl)[req.Submitter] == nil {
+			w.WriteHeader(401)
+			writeErrorResponse(h.app, &w, "Submitter is not registered")
+			return
+		}
 	}
 
 	submittedAt := h.app.Now()

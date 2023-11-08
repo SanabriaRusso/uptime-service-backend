@@ -225,6 +225,10 @@ func TestLoadEnv(t *testing.T) {
 			t.Error("Failed to load Filesystem configs from environment variables")
 		}
 
+		if config.DelegationWhitelistDisabled != false {
+			t.Error("Expected DelegationWhitelistDisabled to be false but got true")
+		}
+
 		// Cleanup
 		os.Clearenv()
 	})
@@ -282,6 +286,46 @@ func TestLoadEnv(t *testing.T) {
 		LoadEnv(mockLogger)
 		if mockLogger.lastMessage != "Error: You can only provide one of Aws, Database, or LocalFileSystem configurations." {
 			t.Error("Expected to get an error for multiple configs but didn't.")
+		}
+	})
+
+	t.Run("delegation whitelist disabled - env", func(t *testing.T) {
+		os.Clearenv()
+		os.Setenv("CONFIG_NETWORK_NAME", "test_network")
+		os.Setenv("DELEGATION_WHITELIST_DISABLED", "1")
+		os.Setenv("CONFIG_FILESYSTEM_PATH", "test_path")
+
+		config := LoadEnv(mockLogger)
+		if config.DelegationWhitelistDisabled != true {
+			t.Error("Expected DelegationWhitelistDisabled to be true but got false")
+		}
+
+		// Cleanup
+		os.Clearenv()
+	})
+
+	t.Run("delegation whitelist disabled - file", func(t *testing.T) {
+		os.Clearenv()
+		// Create a temporary config file
+		fileContent := `
+			{
+				"network_name": "test_network",
+				"delegation_whitelist_disabled": true,
+				"aws": {
+					"account_id": "test_account_id",
+					"bucket_name_suffix": "test_suffix",
+					"region": "test_region",
+					"access_key_id": "test_access_key_id",
+					"secret_access_key": "test_secret_access_key"
+				}
+			}
+			`
+		tmpFile := "/tmp/test_config.json"
+		os.WriteFile(tmpFile, []byte(fileContent), 0644)
+		os.Setenv("CONFIG_FILE", tmpFile)
+		config := LoadEnv(mockLogger)
+		if config.DelegationWhitelistDisabled != true {
+			t.Error("Expected DelegationWhitelistDisabled to be true but got false")
 		}
 	})
 }
