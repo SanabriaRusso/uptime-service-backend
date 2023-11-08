@@ -30,18 +30,18 @@ func getAppConfig() delegation_backend.AppConfig {
 	return config
 }
 
-func getAWSBucketName(config delegation_backend.AppConfig) string {
-	return config.Aws.AccountId + "-" + config.Aws.BucketNameSuffix
+func getAWSBucketName(aws delegation_backend.AwsConfig) string {
+	return aws.AccountId + "-" + aws.BucketNameSuffix
 }
 
 func getAWSIntegrationTestFolder(config delegation_backend.AppConfig) string {
 	return strings.Trim(config.NetworkName, "/") + "/"
 }
 
-func getS3Service(config delegation_backend.AppConfig) *s3.S3 {
-	accessKeyID := config.Aws.AccessKeyId
-	secretAccessKey := config.Aws.SecretAccessKey
-	region := config.Aws.Region
+func getS3Service(config delegation_backend.AwsConfig) *s3.S3 {
+	accessKeyID := config.AccessKeyId
+	secretAccessKey := config.SecretAccessKey
+	region := config.Region
 
 	sess, err := session.NewSession(&aws.Config{
 		Region:      aws.String(region),
@@ -54,11 +54,10 @@ func getS3Service(config delegation_backend.AppConfig) *s3.S3 {
 	return s3.New(sess)
 }
 
-func emptyS3IntegrationTestFolder(config delegation_backend.AppConfig) error {
+func emptyS3IntegrationTestFolder(config delegation_backend.AwsConfig, folderPrefix string) error {
 	log.Printf("Emptying AWS S3 integration_test folder")
 
 	bucketName := getAWSBucketName(config)
-	folderPrefix := getAWSIntegrationTestFolder(config)
 	svc := getS3Service(config)
 
 	// List objects with the specified prefix
@@ -90,11 +89,10 @@ func emptyS3IntegrationTestFolder(config delegation_backend.AppConfig) error {
 	return nil
 }
 
-func waitUntilS3BucketHasBlocksAndSubmissions(config delegation_backend.AppConfig) error {
+func waitUntilS3BucketHasBlocksAndSubmissions(config delegation_backend.AwsConfig, folderPrefix string) error {
 	log.Printf("Waiting for blocks and submissions to appear in the S3 bucket")
 
 	bucketName := getAWSBucketName(config)
-	folderPrefix := getAWSIntegrationTestFolder(config)
 	svc := getS3Service(config)
 
 	hasBlocks := false

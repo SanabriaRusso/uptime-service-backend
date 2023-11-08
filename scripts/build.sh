@@ -21,6 +21,14 @@ fi
 cp "$ref_signer"/*.h "$OUT/headers"
 
 case "$1" in
+  db-migrate-up)
+    cd src/cmd/db_migration 
+    $GO run main.go up
+    ;;
+  db-migrate-down)
+    cd src/cmd/db_migration 
+    $GO run main.go down
+    ;;
   test)
     cd src/delegation_backend
     LD_LIBRARY_PATH="$OUT" $GO test

@@ -28,12 +28,25 @@ func processRows(rows [][](interface{})) Whitelist {
 // and extract public keys out of the column containing
 // public keys of program participants.
 func RetrieveWhitelist(service *sheets.Service, log *logging.ZapEventLogger, appCfg AppConfig) Whitelist {
-	col := appCfg.DelegationWhitelistColumn
-	readRange := appCfg.DelegationWhitelistList + "!" + col + ":" + col
-	spId := appCfg.GsheetId
-	resp, err := service.Spreadsheets.Values.Get(spId, readRange).Do()
-	if err != nil {
-		log.Fatalf("Unable to retrieve data from sheet: %v", err)
+	var resp *sheets.ValueRange
+	var err error
+
+	operation := func() error {
+		col := appCfg.DelegationWhitelistColumn
+		readRange := appCfg.DelegationWhitelistList + "!" + col + ":" + col
+		spId := appCfg.GsheetId
+		resp, err = service.Spreadsheets.Values.Get(spId, readRange).Do()
+		if err != nil {
+			log.Warnf("Unable to retrieve data from sheet: %v", err)
+			return err
+		}
+		return nil
 	}
+
+	err = ExponentialBackoff(operation, maxRetries, initialBackoff)
+	if err != nil {
+		log.Fatalf("Unable to retrieve data from sheet after retries: %v", err)
+	}
+
 	return processRows(resp.Values)
 }

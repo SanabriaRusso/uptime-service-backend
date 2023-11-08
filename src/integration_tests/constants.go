@@ -18,6 +18,10 @@ const (
 	APP_CONFIG_FILE           = UPTIME_SERVICE_CONFIG_DIR + "/app_config.json"
 
 	TIMEOUT_IN_S = 600
+
+	// AWS Keyspaces
+	DATABASE_MIGRATION_DIR   = "../../database/migrations"
+	AWS_SSL_CERTIFICATE_PATH = "../../database/cert/sf-class2-root.crt"
 )
 
 func getDirFiles(dir string, suffix string) ([]string, error) {

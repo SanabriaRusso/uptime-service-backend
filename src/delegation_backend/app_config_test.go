@@ -123,7 +123,7 @@ func TestLoadEnv(t *testing.T) {
 		os.Unsetenv("CONFIG_FILE")
 	})
 
-	t.Run("load DB from config file", func(t *testing.T) {
+	t.Run("load AwsKeyspaces from config file", func(t *testing.T) {
 		// Create a temporary config file
 		fileContent := `
 			{
@@ -131,9 +131,12 @@ func TestLoadEnv(t *testing.T) {
 				"gsheet_id": "test_gsheet_id",
 				"delegation_whitelist_list": "test_list",
 				"delegation_whitelist_column": "test_column",
-				"database": {
-					"connection_string": "test_connection_string",
-					"type": "test_type"
+				"aws_keyspaces": {
+					"keyspace": "test_keyspace",
+					"region": "test_region",
+					"access_key_id": "test_access_key_id",
+					"secret_access_key": "test_secret_access_key",
+					"ssl_certificate_path": "test_ssl_certificate_path"
 				}
 			}
 			`
@@ -144,7 +147,7 @@ func TestLoadEnv(t *testing.T) {
 		if config.NetworkName != "test_network" {
 			t.Errorf("Expected network_name to be test_network but got %s", config.NetworkName)
 		}
-		if config.Database == nil {
+		if config.AwsKeyspaces == nil {
 			t.Errorf("Expected Database config to load but got %s", config.Aws)
 		}
 		os.Unsetenv("CONFIG_FILE")
@@ -183,9 +186,9 @@ func TestLoadEnv(t *testing.T) {
 		os.Setenv("DELEGATION_WHITELIST_COLUMN", "test_column")
 		os.Setenv("AWS_ACCESS_KEY_ID", "test_access_key_id")
 		os.Setenv("AWS_SECRET_ACCESS_KEY", "test_secret_access_key")
-		os.Setenv("CONFIG_AWS_REGION", "test_region")
-		os.Setenv("CONFIG_AWS_ACCOUNT_ID", "test_account_id")
-		os.Setenv("CONFIG_BUCKET_NAME_SUFFIX", "test_suffix")
+		os.Setenv("AWS_REGION", "test_region")
+		os.Setenv("AWS_ACCOUNT_ID", "test_account_id")
+		os.Setenv("AWS_BUCKET_NAME_SUFFIX", "test_suffix")
 
 		config := LoadEnv(mockLogger)
 		if config.Aws == nil || config.Aws.AccessKeyId != "test_access_key_id" {
@@ -196,16 +199,19 @@ func TestLoadEnv(t *testing.T) {
 		os.Clearenv()
 	})
 
-	t.Run("load Database from env", func(t *testing.T) {
+	t.Run("load AwsKeyspaces from env", func(t *testing.T) {
 		os.Setenv("CONFIG_NETWORK_NAME", "test_network")
 		os.Setenv("CONFIG_GSHEET_ID", "test_gsheet_id")
 		os.Setenv("DELEGATION_WHITELIST_LIST", "test_list")
 		os.Setenv("DELEGATION_WHITELIST_COLUMN", "test_column")
-		os.Setenv("CONFIG_DATABASE_CONNECTION_STRING", "test_connection_string")
-		os.Setenv("CONFIG_DATABASE_TYPE", "test_type")
+		os.Setenv("AWS_ACCESS_KEY_ID", "test_access_key_id")
+		os.Setenv("AWS_SECRET_ACCESS_KEY", "test_secret_access_key")
+		os.Setenv("AWS_REGION", "test_region")
+		os.Setenv("AWS_KEYSPACE", "test_keyspace")
+		os.Setenv("AWS_SSL_CERTIFICATE_PATH", "test_ssl_certificate_path")
 
 		config := LoadEnv(mockLogger)
-		if config.Database == nil || config.Database.ConnectionString != "test_connection_string" {
+		if config.AwsKeyspaces == nil || config.AwsKeyspaces.Keyspace != "test_keyspace" {
 			t.Error("Failed to load DB configs from environment variables")
 		}
 
@@ -234,6 +240,7 @@ func TestLoadEnv(t *testing.T) {
 	})
 
 	t.Run("multiple configs error from env", func(t *testing.T) {
+		os.Clearenv()
 		// Set env variables for both AWS and Database
 		os.Setenv("CONFIG_NETWORK_NAME", "test_network")
 		os.Setenv("CONFIG_GSHEET_ID", "test_gsheet_id")
@@ -241,18 +248,17 @@ func TestLoadEnv(t *testing.T) {
 		os.Setenv("DELEGATION_WHITELIST_COLUMN", "test_column")
 
 		os.Setenv("AWS_ACCESS_KEY_ID", "test_access_key_id")
-		os.Setenv("AWS_ACCESS_KEY_ID", "test_access_key_id")
 		os.Setenv("AWS_SECRET_ACCESS_KEY", "test_secret_access_key")
-		os.Setenv("CONFIG_AWS_REGION", "test_region")
-		os.Setenv("CONFIG_AWS_ACCOUNT_ID", "test_account_id")
-		os.Setenv("CONFIG_BUCKET_NAME_SUFFIX", "test_suffix")
+		os.Setenv("AWS_REGION", "test_region")
+		os.Setenv("AWS_ACCOUNT_ID", "test_account_id")
+		os.Setenv("AWS_BUCKET_NAME_SUFFIX", "test_suffix")
 
-		os.Setenv("CONFIG_DATABASE_CONNECTION_STRING", "test_connection_string")
-		os.Setenv("CONFIG_DATABASE_TYPE", "test_type")
+		os.Setenv("AWS_KEYSPACE", "test_keyspace")
+		os.Setenv("AWS_SSL_CERTIFICATE_PATH", "test_ssl_cert")
 
 		LoadEnv(mockLogger)
-		if mockLogger.lastMessage != "Error: You can only provide one of Aws, Database, or LocalFileSystem configurations." {
-			t.Error("Expected to get an error for multiple configs but didn't.")
+		if mockLogger.lastMessage != "Error: You can only provide one of AwsS3, AwsKeyspaces, or LocalFileSystem configurations." {
+			t.Errorf("Expected to get an error for multiple configs but didn't. Message: %s", mockLogger.lastMessage)
 		}
 
 		// Cleanup
@@ -274,9 +280,15 @@ func TestLoadEnv(t *testing.T) {
 					"access_key_id": "test_access_key_id",
 					"secret_access_key": "test_secret_access_key"
 				},
-				"database": {
-					"connection_string": "test_connection_string",
-					"type": "test_type"
+				"filesystem": {
+					"path": "test_path"
+				},
+				"aws_keyspaces": {
+					"keyspace": "test_keyspace",
+					"region": "test_region",
+					"access_key_id": "test_access_key_id",
+					"secret_access_key": "test_secret_access_key",
+					"ssl_certificate_path": "test_ssl_certificate_path"
 				}
 			}
 			`
@@ -284,8 +296,8 @@ func TestLoadEnv(t *testing.T) {
 		os.WriteFile(tmpFile, []byte(fileContent), 0644)
 		os.Setenv("CONFIG_FILE", tmpFile)
 		LoadEnv(mockLogger)
-		if mockLogger.lastMessage != "Error: You can only provide one of Aws, Database, or LocalFileSystem configurations." {
-			t.Error("Expected to get an error for multiple configs but didn't.")
+		if mockLogger.lastMessage != "Error: You can only provide one of AwsS3, AwsKeyspaces, or LocalFileSystem configurations." {
+			t.Errorf("Expected to get an error for multiple configs but didn't. Message: %s", mockLogger.lastMessage)
 		}
 	})
 

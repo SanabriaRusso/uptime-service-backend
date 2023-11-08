@@ -29,7 +29,7 @@ func LoadEnv(log logging.EventLogger) AppConfig {
 		if err != nil {
 			log.Fatalf("Error decoding config file: %s", err)
 		}
-		// Set AWS credentials from config file in case we are using AWS
+		// Set AWS credentials from config file in case we are using AWS S3 or AWS Keyspaces
 		if config.Aws != nil {
 			os.Setenv("AWS_ACCESS_KEY_ID", config.Aws.AccessKeyId)
 			os.Setenv("AWS_SECRET_ACCESS_KEY", config.Aws.SecretAccessKey)
@@ -54,11 +54,12 @@ func LoadEnv(log logging.EventLogger) AppConfig {
 		}
 
 		// AWS configurations
-		if accessKeyId := os.Getenv("AWS_ACCESS_KEY_ID"); accessKeyId != "" {
+		if bucketNameSuffix := os.Getenv("AWS_BUCKET_NAME_SUFFIX"); bucketNameSuffix != "" {
+			accessKeyId := getEnvChecked("AWS_ACCESS_KEY_ID", log)
 			secretAccessKey := getEnvChecked("AWS_SECRET_ACCESS_KEY", log)
-			awsRegion := getEnvChecked("CONFIG_AWS_REGION", log)
-			awsAccountId := getEnvChecked("CONFIG_AWS_ACCOUNT_ID", log)
-			bucketNameSuffix := getEnvChecked("CONFIG_BUCKET_NAME_SUFFIX", log)
+			awsRegion := getEnvChecked("AWS_REGION", log)
+			awsAccountId := getEnvChecked("AWS_ACCOUNT_ID", log)
+			bucketNameSuffix := getEnvChecked("AWS_BUCKET_NAME_SUFFIX", log)
 
 			config.Aws = &AwsConfig{
 				AccountId:        awsAccountId,
@@ -69,13 +70,20 @@ func LoadEnv(log logging.EventLogger) AppConfig {
 			}
 		}
 
-		// Database configurations
-		if connectionString := os.Getenv("CONFIG_DATABASE_CONNECTION_STRING"); connectionString != "" {
-			databaseType := getEnvChecked("CONFIG_DATABASE_TYPE", log)
+		// AWSKeyspace configurations
+		if awsKeyspace := os.Getenv("AWS_KEYSPACE"); awsKeyspace != "" {
+			accessKeyId := getEnvChecked("AWS_ACCESS_KEY_ID", log)
+			secretAccessKey := getEnvChecked("AWS_SECRET_ACCESS_KEY", log)
+			awsRegion := getEnvChecked("AWS_REGION", log)
+			awsKeyspace := getEnvChecked("AWS_KEYSPACE", log)
+			sslCertificatePath := getEnvChecked("AWS_SSL_CERTIFICATE_PATH", log)
 
-			config.Database = &DatabaseConfig{
-				ConnectionString: connectionString,
-				DatabaseType:     databaseType,
+			config.AwsKeyspaces = &AwsKeyspacesConfig{
+				Keyspace:           awsKeyspace,
+				Region:             awsRegion,
+				AccessKeyId:        accessKeyId,
+				SecretAccessKey:    secretAccessKey,
+				SSLCertificatePath: sslCertificatePath,
 			}
 		}
 
@@ -98,15 +106,15 @@ func LoadEnv(log logging.EventLogger) AppConfig {
 	if config.Aws != nil {
 		configCount++
 	}
-	if config.Database != nil {
+	if config.AwsKeyspaces != nil {
 		configCount++
 	}
 	if config.LocalFileSystem != nil {
 		configCount++
 	}
 
-	if configCount != 1 {
-		log.Fatalf("Error: You can only provide one of Aws, Database, or LocalFileSystem configurations.")
+	if configCount > 1 {
+		log.Fatalf("Error: You can only provide one of AwsS3, AwsKeyspaces, or LocalFileSystem configurations.")
 	}
 
 	return config
@@ -143,9 +151,12 @@ type AwsConfig struct {
 	SecretAccessKey  string `json:"secret_access_key"`
 }
 
-type DatabaseConfig struct {
-	ConnectionString string `json:"connection_string"`
-	DatabaseType     string `json:"database_type"`
+type AwsKeyspacesConfig struct {
+	Keyspace           string `json:"keyspace"`
+	Region             string `json:"region"`
+	AccessKeyId        string `json:"access_key_id"`
+	SecretAccessKey    string `json:"secret_access_key"`
+	SSLCertificatePath string `json:"ssl_certificate_path"`
 }
 
 type LocalFileSystemConfig struct {
@@ -159,6 +170,6 @@ type AppConfig struct {
 	DelegationWhitelistColumn   string                 `json:"delegation_whitelist_column"`
 	DelegationWhitelistDisabled bool                   `json:"delegation_whitelist_disabled,omitempty"`
 	Aws                         *AwsConfig             `json:"aws,omitempty"`
-	Database                    *DatabaseConfig        `json:"database,omitempty"`
+	AwsKeyspaces                *AwsKeyspacesConfig    `json:"aws_keyspaces,omitempty"`
 	LocalFileSystem             *LocalFileSystemConfig `json:"filesystem,omitempty"`
 }
