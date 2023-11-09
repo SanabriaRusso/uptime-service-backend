@@ -37,18 +37,18 @@ def process_csv_directory(directory):
             partial_output_file.write(f"{key}: {', '.join(map(str, values))}\n")
 
     for key, values in data.items():
-        # XXX still not accurate. It will undervalue duplicated entries per day
+        # Assumes correct input, no dups etc.
         submited_values = len(values)
         avg_value = round(sum(values) / max(base_for_avg, submited_values), 2)
         output_data[key] = {'avg_value': avg_value, 'submitted': len(values)}
 
-    
     sorted_output_data = dict(sorted(output_data.items(), key=lambda item: item[1]['avg_value']))
 
     # Save in dir/output as csv file 
     output_filename = os.path.join(directory, OUTPUT_SUBDIR, f"{directory}.output.csv")
     with open(output_filename, 'w', newline='') as output_file:
         csv_writer = csv.writer(output_file)
+        csv_writer.writerow(["BP key", "average %", "number of submissions"])
         for key, values in sorted_output_data.items():
             csv_writer.writerow([key, values['avg_value'], values['submitted']])
 
