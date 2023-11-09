@@ -1,4 +1,5 @@
 CREATE TABLE IF NOT EXISTS submissions (
+    // filled by uptime_service_backend
     submitted_at_date TEXT,
     submitted_at TIMESTAMP,
     submitter TEXT,
@@ -9,5 +10,11 @@ CREATE TABLE IF NOT EXISTS submissions (
     snark_work BLOB,
     graphql_control_port INT,
     built_with_commit_sha TEXT,
+    // filled by zk-validator component
+    state_hash TEXT, 
+    parent TEXT,
+    height INT,
+    slot INT,
+    validation_error TEXT,
     PRIMARY KEY (submitted_at_date, submitted_at, submitter)
 );
