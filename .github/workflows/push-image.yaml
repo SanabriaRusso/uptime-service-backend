@@ -16,6 +16,7 @@ on:
 env:
   NETWORK_NAME: ${{ github.event.inputs.network_name }}
   DOCKER_BASE_TAG_PREFIX: ${{ github.event.inputs.docker_base_tag_prefix }}
+  WORKFLOW_SHA: ${{ github.sha }}
   FUNCTIONS: ./.github/workflows/helpers/functions.sh
   VARIABLES: ./.github/workflows/helpers/variables.sh
 
@@ -34,21 +35,17 @@ jobs:
 
       - name: 📥 Checkout
         uses: actions/checkout@v3    
+        with:
+          submodules: recursive
 
       - name: 📥 Login to Amazon ECR
-        id: login-ecr
         uses: aws-actions/amazon-ecr-login@v1
 
       - name: ⚙ Get Short Commit SHA and Get Image Tag
-        run: |
-          echo "IMAGE_BASE_COMMIT_SHORT=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
-          echo "TAG=${{ env.DOCKER_BASE_TAG_PREFIX }}-${{ env.IMAGE_BASE_COMMIT_SHORT }}-${{ env.NETWORK_NAME }}" >> $GITHUB_ENV
-
-      - name: ⚙ Check ECR if Tag already exists
+        id: short-commit-sha
         run: |
           source ${{ env.FUNCTIONS }}
-          source ${{ env.VARIABLES }}
-          abort_process_if_image_tag_exists $ECR_REGISTRY_NAME ${{ env.TAG }}
+          echo "TAG=${{ env.DOCKER_BASE_TAG_PREFIX }}-$(shorten_commit_sha ${{ env.WORKFLOW_SHA }})-${{ env.NETWORK_NAME }}" >> $GITHUB_ENV
 
       - name: 📦 Install Nix
         uses: cachix/install-nix-action@v22
@@ -57,9 +54,8 @@ jobs:
 
       - name: 🛠️ Build BPU Docker Image
         run: |
-          nix-shell
-          source ${{ env.VARIABLES }}
-          TAG=${{ env.TAG }} make docker
+          TAG=${{ env.TAG }}
+          nix-shell --run "make docker"
 
       - name: 📤 Push BPU Docker Image
         run: |
