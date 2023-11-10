@@ -105,7 +105,7 @@ func main() {
 
 	// AppConfig already ensures that is S3Key is set, S3Bucket is set as well.
 	if appCfg.Output.S3Key != "" {
-		outputFileName := strings.Join([]string{*aws.String(appCfg.Output.S3Key), itn.OutputFileName()}, "/")
+		outputFileName := strings.Join([]string{*aws.String(appCfg.Output.S3Key), itn.OutputFileName(appCfg)}, "/")
 		// AWS SDK is not smart enough to rewind the file, so we have to do it manually.
 		_, err := outputFile.Seek(0, 0)
 		if err != nil {
