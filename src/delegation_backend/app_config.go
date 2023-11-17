@@ -53,10 +53,11 @@ func LoadEnv(log logging.EventLogger) AppConfig {
 			delegationWhitelistColumn = getEnvChecked("DELEGATION_WHITELIST_COLUMN", log)
 		}
 
-		// AWS configurations
+		// AWS S3 configurations
 		if bucketNameSuffix := os.Getenv("AWS_BUCKET_NAME_SUFFIX"); bucketNameSuffix != "" {
-			accessKeyId := getEnvChecked("AWS_ACCESS_KEY_ID", log)
-			secretAccessKey := getEnvChecked("AWS_SECRET_ACCESS_KEY", log)
+			// accessKeyId and secretAccessKey variables are not needed if program works in k8s cluster
+			accessKeyId := os.Getenv("AWS_ACCESS_KEY_ID")
+			secretAccessKey := os.Getenv("AWS_SECRET_ACCESS_KEY")
 			awsRegion := getEnvChecked("AWS_REGION", log)
 			awsAccountId := getEnvChecked("AWS_ACCOUNT_ID", log)
 			bucketNameSuffix := getEnvChecked("AWS_BUCKET_NAME_SUFFIX", log)
@@ -72,8 +73,9 @@ func LoadEnv(log logging.EventLogger) AppConfig {
 
 		// AWSKeyspace configurations
 		if awsKeyspace := os.Getenv("AWS_KEYSPACE"); awsKeyspace != "" {
-			accessKeyId := getEnvChecked("AWS_ACCESS_KEY_ID", log)
-			secretAccessKey := getEnvChecked("AWS_SECRET_ACCESS_KEY", log)
+			// accessKeyId and secretAccessKey variables are not needed if program works in k8s cluster
+			accessKeyId := os.Getenv("AWS_ACCESS_KEY_ID")
+			secretAccessKey := os.Getenv("AWS_SECRET_ACCESS_KEY")
 			awsRegion := getEnvChecked("AWS_REGION", log)
 			awsKeyspace := getEnvChecked("AWS_KEYSPACE", log)
 			sslCertificatePath := getEnvChecked("AWS_SSL_CERTIFICATE_PATH", log)
