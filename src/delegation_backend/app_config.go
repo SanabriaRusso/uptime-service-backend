@@ -33,7 +33,11 @@ func LoadEnv(log logging.EventLogger) AppConfig {
 		if config.Aws != nil {
 			os.Setenv("AWS_ACCESS_KEY_ID", config.Aws.AccessKeyId)
 			os.Setenv("AWS_SECRET_ACCESS_KEY", config.Aws.SecretAccessKey)
+		} else if config.AwsKeyspaces != nil {
+			os.Setenv("AWS_ACCESS_KEY_ID", config.AwsKeyspaces.AccessKeyId)
+			os.Setenv("AWS_SECRET_ACCESS_KEY", config.AwsKeyspaces.SecretAccessKey)
 		}
+
 	} else {
 		networkName := getEnvChecked("CONFIG_NETWORK_NAME", log)
 

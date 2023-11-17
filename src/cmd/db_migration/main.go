@@ -2,6 +2,7 @@ package main
 
 import (
 	dg "block_producers_uptime/delegation_backend"
+	"context"
 	"os"
 
 	logging "github.com/ipfs/go-log/v2"
@@ -21,6 +22,7 @@ func main() {
 	log := logging.Logger("delegation backend db migration")
 
 	config := dg.LoadEnv(log)
+	ctx := context.Background()
 
 	if len(os.Args) < 2 {
 		log.Fatal("Missing required command: 'up' or 'down'")
@@ -30,12 +32,12 @@ func main() {
 		log.Infof("storage backend: Aws Keyspaces")
 		switch os.Args[1] {
 		case "up":
-			err := dg.MigrationUp(config.AwsKeyspaces, DATABASE_MIGRATION_DIR)
+			err := dg.MigrationUp(ctx, config.AwsKeyspaces, DATABASE_MIGRATION_DIR)
 			if err != nil {
 				log.Fatalf("Migration up failed: %v", err)
 			}
 		case "down":
-			err := dg.MigrationDown(config.AwsKeyspaces, DATABASE_MIGRATION_DIR)
+			err := dg.MigrationDown(ctx, config.AwsKeyspaces, DATABASE_MIGRATION_DIR)
 			if err != nil {
 				log.Fatalf("Migration down failed: %v", err)
 			}

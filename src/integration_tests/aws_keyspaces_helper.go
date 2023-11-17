@@ -2,6 +2,7 @@ package integration_tests
 
 import (
 	dg "block_producers_uptime/delegation_backend"
+	"context"
 	"fmt"
 	"log"
 	"time"
@@ -35,10 +36,10 @@ func checkForSubmissions(session *gocql.Session, keyspace, date string) (bool, e
 	return true, nil // At least one submission found for today
 }
 
-func waitUntilKeyspacesHasBlocksAndSubmissions(config dg.AppConfig) error {
+func waitUntilKeyspacesHasBlocksAndSubmissions(ctx context.Context, config dg.AppConfig) error {
 	log.Printf("Waiting for blocks and submissions to appear in Keyspaces")
 
-	sess, err := dg.InitializeKeyspaceSession(config.AwsKeyspaces)
+	sess, err := dg.InitializeKeyspaceSession(ctx, config.AwsKeyspaces)
 	if err != nil {
 		return fmt.Errorf("error initializing Keyspace session: %w", err)
 	}
@@ -72,9 +73,9 @@ func waitUntilKeyspacesHasBlocksAndSubmissions(config dg.AppConfig) error {
 	}
 }
 
-func WaitForTablesActive(config *dg.AwsKeyspacesConfig, tables []string) error {
+func WaitForTablesActive(ctx context.Context, config *dg.AwsKeyspacesConfig, tables []string) error {
 	log.Printf("Waiting for tables %v to be active...", tables)
-	session, err := dg.InitializeKeyspaceSession(config)
+	session, err := dg.InitializeKeyspaceSession(ctx, config)
 	if err != nil {
 		return err
 	}

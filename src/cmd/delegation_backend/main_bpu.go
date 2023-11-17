@@ -51,7 +51,7 @@ func main() {
 		}
 	} else if appCfg.AwsKeyspaces != nil {
 		log.Infof("storage backend: Aws Keyspaces")
-		session, err := InitializeKeyspaceSession(appCfg.AwsKeyspaces)
+		session, err := InitializeKeyspaceSession(ctx, appCfg.AwsKeyspaces)
 		if err != nil {
 			log.Fatalf("Error initializing Keyspace session: %v", err)
 		}

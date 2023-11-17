@@ -9,6 +9,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/aws/aws-sdk-go-v2/config"
+
 	"github.com/aws/aws-sigv4-auth-cassandra-gocql-driver-plugin/sigv4"
 	"github.com/gocql/gocql"
 	"github.com/golang-migrate/migrate/v4"
@@ -18,20 +20,37 @@ import (
 )
 
 // InitializeKeyspaceSession creates a new gocql session for Amazon Keyspaces using the provided configuration.
-func InitializeKeyspaceSession(config *AwsKeyspacesConfig) (*gocql.Session, error) {
+func InitializeKeyspaceSession(ctx context.Context, awsKeyspaceConf *AwsKeyspacesConfig) (*gocql.Session, error) {
+
+	awsCfg, err := config.LoadDefaultConfig(ctx, config.WithRegion(awsKeyspaceConf.Region))
+	if err != nil {
+		log.Fatalf("Error loading AWS configuration: %v", err)
+	}
+	creds, err := awsCfg.Credentials.Retrieve(ctx)
+	if err != nil {
+		log.Fatalf("Error retrieving AWS credentials: %v", err)
+	}
+
+	ksConfig := &AwsKeyspacesConfig{
+		AccessKeyId:        creds.AccessKeyID,
+		SecretAccessKey:    creds.SecretAccessKey,
+		Region:             awsCfg.Region,
+		Keyspace:           awsKeyspaceConf.Keyspace,
+		SSLCertificatePath: awsKeyspaceConf.SSLCertificatePath,
+	}
 	auth := sigv4.NewAwsAuthenticator()
-	auth.AccessKeyId = config.AccessKeyId
-	auth.SecretAccessKey = config.SecretAccessKey
-	auth.Region = config.Region
+	auth.AccessKeyId = ksConfig.AccessKeyId
+	auth.SecretAccessKey = ksConfig.SecretAccessKey
+	auth.Region = ksConfig.Region
 
 	// Create a SigV4 gocql cluster config
-	endpoint := "cassandra." + config.Region + ".amazonaws.com"
+	endpoint := "cassandra." + ksConfig.Region + ".amazonaws.com"
 	cluster := gocql.NewCluster(endpoint)
-	cluster.Keyspace = config.Keyspace
+	cluster.Keyspace = ksConfig.Keyspace
 	cluster.Port = 9142
 	cluster.Authenticator = auth
 	cluster.SslOpts = &gocql.SslOptions{
-		CaPath:                 config.SSLCertificatePath,
+		CaPath:                 ksConfig.SSLCertificatePath,
 		EnableHostVerification: false,
 	}
 
@@ -187,10 +206,10 @@ func createSchemaMigrationsTableIfNotExists(session *gocql.Session, keyspace str
 	return ExponentialBackoff(operation, maxRetries, initialBackoff)
 }
 
-func DropAllTables(config *AwsKeyspacesConfig) error {
+func DropAllTables(ctx context.Context, config *AwsKeyspacesConfig) error {
 	log.Print("Dropping all tables...")
 	operation := func() error {
-		session, err := InitializeKeyspaceSession(config)
+		session, err := InitializeKeyspaceSession(ctx, config)
 		if err != nil {
 			return fmt.Errorf("could not initialize Cassandra session: %w", err)
 		}
@@ -216,9 +235,9 @@ func DropAllTables(config *AwsKeyspacesConfig) error {
 }
 
 // MigrationUp applies all up migrations.
-func MigrationUp(config *AwsKeyspacesConfig, migrationPath string) error {
+func MigrationUp(ctx context.Context, config *AwsKeyspacesConfig, migrationPath string) error {
 	log.Print("Running database migration Up...")
-	session, err := InitializeKeyspaceSession(config)
+	session, err := InitializeKeyspaceSession(ctx, config)
 	if err != nil {
 		return fmt.Errorf("could not initialize Cassandra session: %w", err)
 	}
@@ -257,9 +276,9 @@ func MigrationUp(config *AwsKeyspacesConfig, migrationPath string) error {
 }
 
 // MigrationDown rolls back all migrations.
-func MigrationDown(config *AwsKeyspacesConfig, migrationPath string) error {
+func MigrationDown(ctx context.Context, config *AwsKeyspacesConfig, migrationPath string) error {
 	log.Print("Running database migration Down...")
-	session, err := InitializeKeyspaceSession(config)
+	session, err := InitializeKeyspaceSession(ctx, config)
 	if err != nil {
 		return err
 	}

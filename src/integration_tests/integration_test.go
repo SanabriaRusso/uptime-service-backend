@@ -2,6 +2,7 @@ package integration_tests
 
 import (
 	dg "block_producers_uptime/delegation_backend"
+	"context"
 	"log"
 	"testing"
 )
@@ -16,14 +17,15 @@ func init() {
 
 	// Setup AWS Keyspaces database
 	setAppConfig("aws_keyspaces")
+	ctx := context.Background()
 	config := getAppConfig()
 	config.AwsKeyspaces.SSLCertificatePath = AWS_SSL_CERTIFICATE_PATH
-	err = dg.MigrationUp(config.AwsKeyspaces, DATABASE_MIGRATION_DIR)
+	err = dg.MigrationUp(ctx, config.AwsKeyspaces, DATABASE_MIGRATION_DIR)
 	if err != nil {
 		log.Fatalf("Failed to migrate up: %v", err)
 	}
 	tables := []string{"schema_migrations", "submissions", "blocks"}
-	err = WaitForTablesActive(config.AwsKeyspaces, tables)
+	err = WaitForTablesActive(ctx, config.AwsKeyspaces, tables)
 	if err != nil {
 		log.Fatalf("Failed to wait for tables to be active: %v", err)
 	}
@@ -78,17 +80,18 @@ func TestIntegration_BP_Uptime_Storage(t *testing.T) {
 	// 3. Test AWS Keyspaces Storage
 	log.Printf(" >>> 3. Test AWS Keyspaces Storage")
 	setAppConfig("aws_keyspaces")
+	ctx := context.Background()
 	config = getAppConfig()
 	config.AwsKeyspaces.SSLCertificatePath = AWS_SSL_CERTIFICATE_PATH
 
-	defer dg.DropAllTables(config.AwsKeyspaces)
+	defer dg.DropAllTables(ctx, config.AwsKeyspaces)
 
 	miniminaNodeStop(networkName, "uptime-service-backend")
 	copyFile(APP_CONFIG_FILE, networkDir+"/uptime_service_config/app_config.json")
 	copyFile(AWS_SSL_CERTIFICATE_PATH, networkDir+"/uptime_service_config/sf-class2-root.crt")
 	miniminaNodeStart(networkName, "uptime-service-backend")
 
-	err = waitUntilKeyspacesHasBlocksAndSubmissions(config)
+	err = waitUntilKeyspacesHasBlocksAndSubmissions(ctx, config)
 	if err != nil {
 		t.Fatalf("Failed to wait until Keyspaces has blocks and submissions: %v", err)
 	}

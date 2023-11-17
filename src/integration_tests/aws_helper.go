@@ -26,6 +26,14 @@ func getAppConfig() delegation_backend.AppConfig {
 	if err := json.Unmarshal(appConfigBytes, &config); err != nil {
 		log.Fatalf("Failed to parse app_config.json: %v", err)
 	}
+	// Set AWS credentials from config file in case we are using AWS S3 or AWS Keyspaces
+	if config.Aws != nil {
+		os.Setenv("AWS_ACCESS_KEY_ID", config.Aws.AccessKeyId)
+		os.Setenv("AWS_SECRET_ACCESS_KEY", config.Aws.SecretAccessKey)
+	} else if config.AwsKeyspaces != nil {
+		os.Setenv("AWS_ACCESS_KEY_ID", config.AwsKeyspaces.AccessKeyId)
+		os.Setenv("AWS_SECRET_ACCESS_KEY", config.AwsKeyspaces.SecretAccessKey)
+	}
 
 	return config
 }
