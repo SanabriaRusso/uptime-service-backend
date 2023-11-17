@@ -128,12 +128,46 @@ If the `CONFIG_FILE` environment variable is not set, the program will fall back
 
 - Only one of `AwsS3`, `AwsKeyspaces`, or `LocalFileSystem` configurations should be provided. If more than one is provided, the program will terminate with an error.
 - Ensure that all necessary environment variables are set. If any required variable is missing, the program will terminate with an error.
-- Using `AWSKeyspaces` for the first time requires running database migration script in order to create necessary tables. After `AWSKeyspaces` is properly set on the environment, one can run database migration using the provided script:
+
+### Database Migration
+
+When using `AWSKeyspaces` as storage for the first time one needs to run database migration script in order to create necessary tables. After `AWSKeyspaces` config is properly set on the environment, one can run database migration using the provided script:
 
 ```bash
 $ nix-shell
-[nix-shell]$ make db-migrate-up
+# To migrate database up
+[nix-shell]$ make db-migrate-up 
+
+# To migrate database down
+[nix-shell]$ make db-migrate-down
 ```
+
+Migration is also possible from dockerfile using non-default entrypoint `db_migration` for instance:
+
+```bash
+# To migrate database up
+docker run \
+-e AWS_KEYSPACE=keyspace_name \
+-e AWS_REGION=us-west-2 \
+-e AWS_ACCESS_KEY_ID=*** \
+-e AWS_SECRET_ACCESS_KEY=*** \
+-e DELEGATION_WHITELIST_DISABLED=1 \
+-e CONFIG_NETWORK_NAME=integration-test \
+--entrypoint db_migration \
+673156464838.dkr.ecr.us-west-2.amazonaws.com/block-producers-uptime:$TAG up
+
+# To migrate database down
+docker run \
+-e AWS_KEYSPACE=keyspace_name \
+-e AWS_REGION=us-west-2 \
+-e AWS_ACCESS_KEY_ID=*** \
+-e AWS_SECRET_ACCESS_KEY=*** \
+-e DELEGATION_WHITELIST_DISABLED=1 \
+-e CONFIG_NETWORK_NAME=integration-test \
+--entrypoint db_migration \
+673156464838.dkr.ecr.us-west-2.amazonaws.com/block-producers-uptime:$TAG down
+```
+> **Note:** Docker image already includes cert and has `AWS_SSL_CERTIFICATE_PATH` set up, however it can be overriden by providing this env variable to docker.
 
 Once you have set up your configuration using either a JSON file or environment variables, you can proceed to run the program. The program will automatically load the configuration and initialize based on the provided settings.
 
