@@ -122,6 +122,8 @@ If the `CONFIG_FILE` environment variable is not set, the program will fall back
    - `AWS_SECRET_ACCESS_KEY` - Your AWS Secret Access Key (same as used for S3).
    - `AWS_SSL_CERTIFICATE_PATH` - The path to your SSL certificate for AWS Keyspaces.
 
+> **Note:** Docker image already includes cert and has `AWS_SSL_CERTIFICATE_PATH` set up, however it can be overriden by providing this env variable to docker.
+
 5. **Local File System Configuration**:
    - `CONFIG_FILESYSTEM_PATH` - Set this to the path where you want the local file system to point.
 
@@ -168,7 +170,6 @@ docker run \
 --entrypoint db_migration \
 673156464838.dkr.ecr.us-west-2.amazonaws.com/block-producers-uptime:$TAG down
 ```
-> **Note:** Docker image already includes cert and has `AWS_SSL_CERTIFICATE_PATH` set up, however it can be overriden by providing this env variable to docker.
 
 Once you have set up your configuration using either a JSON file or environment variables, you can proceed to run the program. The program will automatically load the configuration and initialize based on the provided settings.
 
