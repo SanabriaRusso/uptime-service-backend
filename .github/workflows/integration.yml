@@ -45,3 +45,21 @@ jobs:
         # UPTIME_SERVICE_SECRET is a passphrase needed to decrypt uptime service config files
         UPTIME_SERVICE_SECRET: ${{ secrets.UPTIME_SERVICE_SECRET }}
       run: nix-shell --run "make integration-test"
+
+    - name: 📖 Get logs
+      if: always()
+      run: |
+        mkdir -p integration-test/logs
+        minimina network list
+        minimina network status -n integration-test
+        minimina node logs -n integration-test -i uptime-service-backend -r > integration-test/logs/uptime-service-backend.log
+        minimina node logs -n integration-test -i node-a -r > integration-test/logs/node-a.log
+        minimina node logs -n integration-test -i node-b -r > integration-test/logs/node-b.log
+        minimina node logs -n integration-test -i node-c -r > integration-test/logs/node-c.log
+    
+    - name: 📎 Upload logs
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: logs
+        path: integration-test/logs
