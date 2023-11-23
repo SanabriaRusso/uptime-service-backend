@@ -102,10 +102,11 @@ If the `CONFIG_FILE` environment variable is not set, the program will fall back
    - `CONFIG_NETWORK_NAME` - Set this to your network name.
 
 2. **Whitelist Configuration**:
+   - `GOOGLE_APPLICATION_CREDENTIALS` - set path to `minasheets.json` file including credentials to connect to Google Sheets.
    - `CONFIG_GSHEET_ID` - Set this to your Google Sheet ID with the keys to whitelist.
    - `DELEGATION_WHITELIST_LIST` - Set this to your delegation whitelist sheet title where the whitelist keys are.
    - `DELEGATION_WHITELIST_COLUMN` - Set this to your delegation whitelist sheet column where the whitelist keys are.
-   -  Or disable whitelisting alltogether by setting `DELEGATION_WHITELIST_DISABLED=1`. The previous three env variables are then ignored.
+   -  Or disable whitelisting alltogether by setting `DELEGATION_WHITELIST_DISABLED=1`. The previous four env variables are then ignored.
 
 3. **AWS S3 Configuration**:
    - `AWS_ACCOUNT_ID` - Your AWS Account ID.
@@ -120,6 +121,8 @@ If the `CONFIG_FILE` environment variable is not set, the program will fall back
    - `AWS_ACCESS_KEY_ID` - Your AWS Access Key ID (same as used for S3).
    - `AWS_SECRET_ACCESS_KEY` - Your AWS Secret Access Key (same as used for S3).
    - `AWS_SSL_CERTIFICATE_PATH` - The path to your SSL certificate for AWS Keyspaces.
+
+> **Note:** Docker image already includes cert and has `AWS_SSL_CERTIFICATE_PATH` set up, however it can be overriden by providing this env variable to docker.
 
 5. **Local File System Configuration**:
    - `CONFIG_FILESYSTEM_PATH` - Set this to the path where you want the local file system to point.
@@ -167,7 +170,6 @@ docker run \
 --entrypoint db_migration \
 673156464838.dkr.ecr.us-west-2.amazonaws.com/block-producers-uptime:$TAG down
 ```
-> **Note:** Docker image already includes cert and has `AWS_SSL_CERTIFICATE_PATH` set up, however it can be overriden by providing this env variable to docker.
 
 Once you have set up your configuration using either a JSON file or environment variables, you can proceed to run the program. The program will automatically load the configuration and initialize based on the provided settings.
 
