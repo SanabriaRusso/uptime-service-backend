@@ -41,9 +41,9 @@ func (ctx *AwsContext) S3Save(objs ObjectsToSave) {
 			Key:    aws.String(ctx.Prefix + "/" + path),
 		})
 		if err == nil {
-			ctx.Log.Warnf("object already exists: %s", path)
+			ctx.Log.Warnf("S3Save: object already exists: %s", path)
 		}
-
+		ctx.Log.Debugf("S3Save: saving %s", path)
 		_, err = ctx.Client.PutObject(ctx.Context, &s3.PutObjectInput{
 			Bucket:     ctx.BucketName,
 			Key:        aws.String(ctx.Prefix + "/" + path),
@@ -51,7 +51,7 @@ func (ctx *AwsContext) S3Save(objs ObjectsToSave) {
 			ContentMD5: nil,
 		})
 		if err != nil {
-			ctx.Log.Warnf("Error while saving metadata: %v", err)
+			ctx.Log.Warnf("S3Save: Error while saving metadata: %v", err)
 		}
 	}
 }
@@ -62,16 +62,16 @@ func LocalFileSystemSave(objs ObjectsToSave, directory string, log logging.Stand
 
 		// Check if file exists
 		if _, err := os.Stat(fullPath); !os.IsNotExist(err) {
-			log.Warnf("file already exists: %s", fullPath)
+			log.Warnf("LocalFileSystemSave: file already exists: %s", fullPath)
 			continue // skip to the next object
 		}
 
 		err := os.MkdirAll(filepath.Dir(fullPath), os.ModePerm)
 		if err != nil {
-			log.Warnf("Error creating directories for %s: %v", fullPath, err)
+			log.Warnf("LocalFileSystemSave: Error creating directories for %s: %v", fullPath, err)
 			continue // skip to the next object
 		}
-
+		log.Debugf("LocalFileSystemSave: saving %s", fullPath)
 		err = os.WriteFile(fullPath, bs, 0644)
 		if err != nil {
 			log.Warnf("Error writing to file %s: %v", fullPath, err)

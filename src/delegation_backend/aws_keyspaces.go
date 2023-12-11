@@ -154,26 +154,26 @@ func (kc *KeyspaceContext) KeyspaceSave(objs ObjectsToSave) {
 	for path, bs := range objs {
 		if strings.HasPrefix(path, "submissions/") {
 			submission, err := kc.parseSubmissionBytes(bs, path)
-			kc.Log.Debugf("Saving submission for block: %v, submitter: %v", submission.BlockHash, submission.Submitter)
+			kc.Log.Debugf("KeyspaceSave: Saving submission for block: %v, submitter: %v, submitted_at: %v", submission.BlockHash, submission.Submitter, submission.SubmittedAt)
 			if err != nil {
-				kc.Log.Warnf("Error parsing submission JSON: %v", err)
+				kc.Log.Warnf("KeyspaceSave: Error parsing submission JSON: %v", err)
 				continue
 			}
 			if err := kc.insertSubmission(submission); err != nil {
-				kc.Log.Warnf("Error saving submission to Keyspaces: %v", err)
+				kc.Log.Warnf("KeyspaceSave: Error saving submission to Keyspaces: %v", err)
 			}
 		} else if strings.HasPrefix(path, "blocks/") {
 			block, err := kc.parseBlockBytes(bs, path)
-			kc.Log.Debugf("Saving block: %v", block.BlockHash)
+			kc.Log.Debugf("KeyspaceSave: Saving block: %v", block.BlockHash)
 			if err != nil {
-				kc.Log.Warnf("Error parsing block file: %v", err)
+				kc.Log.Warnf("KeyspaceSave: Error parsing block file: %v", err)
 				continue
 			}
 			if err := kc.insertBlock(block); err != nil {
-				kc.Log.Warnf("Error saving block to Keyspaces: %v", err)
+				kc.Log.Warnf("KeyspaceSave: Error saving block to Keyspaces: %v", err)
 			}
 		} else {
-			kc.Log.Warnf("Unknown path format: %s", path)
+			kc.Log.Warnf("KeyspaceSave: Unknown path format: %s", path)
 		}
 	}
 }
