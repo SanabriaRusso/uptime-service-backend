@@ -31,6 +31,8 @@ func main() {
 	appCfg := LoadEnv(log)
 	app := new(App)
 	app.Log = log
+	awsctx := AwsContext{}
+	kc := KeyspaceContext{}
 
 	// Storage backend setup
 	if appCfg.Aws != nil {
@@ -40,33 +42,44 @@ func main() {
 			log.Fatalf("Error loading AWS configuration: %v", err)
 		}
 		client := s3.NewFromConfig(awsCfg)
-		awsctx := AwsContext{Client: client, BucketName: aws.String(GetAWSBucketName(appCfg)), Prefix: appCfg.NetworkName, Context: ctx, Log: log}
-		app.Save = func(objs ObjectsToSave) {
-			awsctx.S3Save(objs)
-		}
-	} else if appCfg.LocalFileSystem != nil {
-		log.Infof("storage backend: Local File System")
-		app.Save = func(objs ObjectsToSave) {
-			LocalFileSystemSave(objs, appCfg.LocalFileSystem.Path, log)
-		}
-	} else if appCfg.AwsKeyspaces != nil {
-		log.Infof("storage backend: Aws Keyspaces")
+		awsctx = AwsContext{Client: client, BucketName: aws.String(GetAWSBucketName(appCfg)), Prefix: appCfg.NetworkName, Context: ctx, Log: log}
+
+	}
+
+	if appCfg.AwsKeyspaces != nil {
+		log.Infof("storage backend: AWS Keyspaces")
 		session, err := InitializeKeyspaceSession(appCfg.AwsKeyspaces)
 		if err != nil {
 			log.Fatalf("Error initializing Keyspace session: %v", err)
 		}
 		defer session.Close()
 
-		kc := KeyspaceContext{
+		kc = KeyspaceContext{
 			Session:  session,
 			Keyspace: appCfg.AwsKeyspaces.Keyspace,
 			Context:  ctx,
 			Log:      log,
 		}
-		app.Save = func(objs ObjectsToSave) {
+
+	}
+
+	if appCfg.LocalFileSystem != nil {
+		log.Infof("storage backend: Local File System")
+	}
+
+	app.Save = func(objs ObjectsToSave) {
+		if appCfg.Aws != nil {
+			awsctx.S3Save(objs)
+		}
+		if appCfg.AwsKeyspaces != nil {
 			kc.KeyspaceSave(objs)
 		}
-	} else {
+		if appCfg.LocalFileSystem != nil {
+			LocalFileSystemSave(objs, appCfg.LocalFileSystem.Path, log)
+		}
+	}
+
+	if appCfg.Aws == nil && appCfg.LocalFileSystem == nil && appCfg.AwsKeyspaces == nil {
 		log.Fatal("No storage backend configured!")
 	}
 
