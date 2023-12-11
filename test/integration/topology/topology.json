@@ -92,6 +92,9 @@
         "role": "Uptime_service_backend",
         "app_config_path": "../../test/integration/topology/uptime_service_config/app_config.json",
         "minasheets_path": "../../test/integration/topology/uptime_service_config/minasheets.json",
+        "other_config_files": [
+            "../../database/cert/sf-class2-root.crt"
+        ],
         "docker_image": "uptime-service-backend:integration-test"
     },
     "default-seed": {
