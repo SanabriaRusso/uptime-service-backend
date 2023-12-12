@@ -90,7 +90,7 @@ type NetworkStatus struct {
 	NetworkDir string `json:"network_dir"`
 }
 
-func getNetworkDir(network string) string {
+func miniminaGetNetworkDir(network string) string {
 	var out bytes.Buffer
 	cmd := exec.Command("minimina", "network", "status", "-n", network)
 	cmd.Stdout = &out
