@@ -184,7 +184,7 @@ func createSchemaMigrationsTableIfNotExists(session *gocql.Session, keyspace str
 		return session.Query(query).Exec()
 	}
 
-	return ExponentialBackoff(operation, maxRetries, initialBackoff)
+	return ExponentialBackoff(operation, 5, 1*time.Second)
 }
 
 func DropAllTables(config *AwsKeyspacesConfig) error {
@@ -252,7 +252,7 @@ func MigrationUp(config *AwsKeyspacesConfig, migrationPath string) error {
 		return nil
 	}
 
-	return ExponentialBackoff(operation, maxRetries, initialBackoff)
+	return ExponentialBackoff(operation, 10, 1*time.Second)
 
 }
 
