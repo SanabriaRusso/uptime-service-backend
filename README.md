@@ -73,7 +73,7 @@ The program can be configured using either a JSON configuration file or environm
   "delegation_whitelist_list": "your_whitelist_list",
   "delegation_whitelist_column": "your_whitelist_column",
   "delegation_whitelist_disabled": false,
-  // provide one of the below options
+  // available storage configurations
   "aws": {
     "account_id": "your_aws_account_id",
     "bucket_name_suffix": "your_bucket_name_suffix",
@@ -129,7 +129,7 @@ If the `CONFIG_FILE` environment variable is not set, the program will fall back
 
 ### Important Notes
 
-- Only one of `AwsS3`, `AwsKeyspaces`, or `LocalFileSystem` configurations should be provided. If more than one is provided, the program will terminate with an error.
+- At least one of the following storage options is required: `AwsS3`, `AwsKeyspaces`, or `LocalFileSystem`. Multi-storage configuration is also supported, allowing for a combination of these storage options. 
 - Ensure that all necessary environment variables are set. If any required variable is missing, the program will terminate with an error.
 
 ### Database Migration

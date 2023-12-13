@@ -101,22 +101,6 @@ func LoadEnv(log logging.EventLogger) AppConfig {
 		config.DelegationWhitelistDisabled = delegationWhitelistDisabled
 	}
 
-	// Check that only one of Aws, Database, or LocalFileSystem is provided
-	configCount := 0
-	if config.Aws != nil {
-		configCount++
-	}
-	if config.AwsKeyspaces != nil {
-		configCount++
-	}
-	if config.LocalFileSystem != nil {
-		configCount++
-	}
-
-	if configCount > 1 {
-		log.Fatalf("Error: You can only provide one of AwsS3, AwsKeyspaces, or LocalFileSystem configurations.")
-	}
-
 	return config
 }
 
