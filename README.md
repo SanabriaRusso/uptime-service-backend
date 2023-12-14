@@ -73,7 +73,7 @@ The program can be configured using either a JSON configuration file or environm
   "delegation_whitelist_list": "your_whitelist_list",
   "delegation_whitelist_column": "your_whitelist_column",
   "delegation_whitelist_disabled": false,
-  // provide one of the below options
+  // available storage configurations
   "aws": {
     "account_id": "your_aws_account_id",
     "bucket_name_suffix": "your_bucket_name_suffix",
@@ -102,10 +102,11 @@ If the `CONFIG_FILE` environment variable is not set, the program will fall back
    - `CONFIG_NETWORK_NAME` - Set this to your network name.
 
 2. **Whitelist Configuration**:
+   - `GOOGLE_APPLICATION_CREDENTIALS` - set path to `minasheets.json` file including credentials to connect to Google Sheets.
    - `CONFIG_GSHEET_ID` - Set this to your Google Sheet ID with the keys to whitelist.
    - `DELEGATION_WHITELIST_LIST` - Set this to your delegation whitelist sheet title where the whitelist keys are.
    - `DELEGATION_WHITELIST_COLUMN` - Set this to your delegation whitelist sheet column where the whitelist keys are.
-   -  Or disable whitelisting alltogether by setting `DELEGATION_WHITELIST_DISABLED=1`. The previous three env variables are then ignored.
+   -  Or disable whitelisting alltogether by setting `DELEGATION_WHITELIST_DISABLED=1`. The previous four env variables are then ignored.
 
 3. **AWS S3 Configuration**:
    - `AWS_ACCOUNT_ID` - Your AWS Account ID.
@@ -121,18 +122,53 @@ If the `CONFIG_FILE` environment variable is not set, the program will fall back
    - `AWS_SECRET_ACCESS_KEY` - Your AWS Secret Access Key (same as used for S3).
    - `AWS_SSL_CERTIFICATE_PATH` - The path to your SSL certificate for AWS Keyspaces.
 
+> **Note:** Docker image already includes cert and has `AWS_SSL_CERTIFICATE_PATH` set up, however it can be overriden by providing this env variable to docker.
+
 5. **Local File System Configuration**:
    - `CONFIG_FILESYSTEM_PATH` - Set this to the path where you want the local file system to point.
 
 ### Important Notes
 
-- Only one of `AwsS3`, `AwsKeyspaces`, or `LocalFileSystem` configurations should be provided. If more than one is provided, the program will terminate with an error.
+- At least one of the following storage options is required: `AwsS3`, `AwsKeyspaces`, or `LocalFileSystem`. Multi-storage configuration is also supported, allowing for a combination of these storage options. 
 - Ensure that all necessary environment variables are set. If any required variable is missing, the program will terminate with an error.
-- Using `AWSKeyspaces` for the first time requires running database migration script in order to create necessary tables. After `AWSKeyspaces` is properly set on the environment, one can run database migration using the provided script:
+
+### Database Migration
+
+When using `AWSKeyspaces` as storage for the first time one needs to run database migration script in order to create necessary tables. After `AWSKeyspaces` config is properly set on the environment, one can run database migration using the provided script:
 
 ```bash
 $ nix-shell
-[nix-shell]$ make db-migrate-up
+# To migrate database up
+[nix-shell]$ make db-migrate-up 
+
+# To migrate database down
+[nix-shell]$ make db-migrate-down
+```
+
+Migration is also possible from dockerfile using non-default entrypoint `db_migration` for instance:
+
+```bash
+# To migrate database up
+docker run \
+-e AWS_KEYSPACE=keyspace_name \
+-e AWS_REGION=us-west-2 \
+-e AWS_ACCESS_KEY_ID=*** \
+-e AWS_SECRET_ACCESS_KEY=*** \
+-e DELEGATION_WHITELIST_DISABLED=1 \
+-e CONFIG_NETWORK_NAME=integration-test \
+--entrypoint db_migration \
+673156464838.dkr.ecr.us-west-2.amazonaws.com/block-producers-uptime:$TAG up
+
+# To migrate database down
+docker run \
+-e AWS_KEYSPACE=keyspace_name \
+-e AWS_REGION=us-west-2 \
+-e AWS_ACCESS_KEY_ID=*** \
+-e AWS_SECRET_ACCESS_KEY=*** \
+-e DELEGATION_WHITELIST_DISABLED=1 \
+-e CONFIG_NETWORK_NAME=integration-test \
+--entrypoint db_migration \
+673156464838.dkr.ecr.us-west-2.amazonaws.com/block-producers-uptime:$TAG down
 ```
 
 Once you have set up your configuration using either a JSON file or environment variables, you can proceed to run the program. The program will automatically load the configuration and initialize based on the provided settings.
@@ -201,6 +237,8 @@ To create a Docker image within the `nix-shell`, set the `$TAG` environment vari
 $ nix-shell
 [nix-shell]$ TAG=uptime-service-backend make docker
 ```
+
+To create the docker image and push it to AWS ECR you can use the [Build and push image to ECR](https://github.com/MinaFoundation/uptime-service-backend/actions/workflows/push-image.yaml) Github action on the target branch or tag.
 
 ## Testing
 
