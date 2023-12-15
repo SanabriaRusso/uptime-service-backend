@@ -16,5 +16,7 @@ CREATE TABLE IF NOT EXISTS submissions (
     height INT,
     slot INT,
     validation_error TEXT,
+    // was it verified by zk-validator
+    verified BOOLEAN,
     PRIMARY KEY (submitted_at_date, submitted_at, submitter)
 );

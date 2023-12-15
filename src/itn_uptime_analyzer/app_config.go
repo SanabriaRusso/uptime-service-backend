@@ -147,9 +147,9 @@ func unlessDefault[T comparable](value T, defaultVal T) *T {
     return &value
 }
 
-// Get the S3 file name with todays date
-func OutputFileName() string {
-	return strings.Join([]string{"summary_", time.Now().Format("2006-01-02"), ".csv"}, "")
+// Get the S3 file name with the start time
+func OutputFileName(cfg AppConfig) string {
+	return strings.Join([]string{"summary_", cfg.Period.Start.Format("2006-01-02T15:04:05"), "-", cfg.Period.End.Format("2006-01-02T15:04:05"), ".csv"}, "")
 }
 
 

@@ -9,8 +9,8 @@ import (
 type Operation func() error
 
 const (
-	maxRetries     = 10
-	initialBackoff = 1 * time.Second
+	maxRetries     = 3
+	initialBackoff = 300 * time.Millisecond
 )
 
 // ExponentialBackoff retries the provided operation with an exponential backoff strategy.

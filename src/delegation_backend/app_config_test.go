@@ -230,7 +230,6 @@ func TestLoadEnv(t *testing.T) {
 		if config.LocalFileSystem == nil || config.LocalFileSystem.Path != "test_path" {
 			t.Error("Failed to load Filesystem configs from environment variables")
 		}
-
 		if config.DelegationWhitelistDisabled != false {
 			t.Error("Expected DelegationWhitelistDisabled to be false but got true")
 		}
@@ -239,7 +238,7 @@ func TestLoadEnv(t *testing.T) {
 		os.Clearenv()
 	})
 
-	t.Run("multiple configs error from env", func(t *testing.T) {
+	t.Run("multiple configs from env", func(t *testing.T) {
 		os.Clearenv()
 		// Set env variables for both AWS and Database
 		os.Setenv("CONFIG_NETWORK_NAME", "test_network")
@@ -256,16 +255,19 @@ func TestLoadEnv(t *testing.T) {
 		os.Setenv("AWS_KEYSPACE", "test_keyspace")
 		os.Setenv("AWS_SSL_CERTIFICATE_PATH", "test_ssl_cert")
 
-		LoadEnv(mockLogger)
-		if mockLogger.lastMessage != "Error: You can only provide one of AwsS3, AwsKeyspaces, or LocalFileSystem configurations." {
-			t.Errorf("Expected to get an error for multiple configs but didn't. Message: %s", mockLogger.lastMessage)
+		config := LoadEnv(mockLogger)
+		if config.AwsKeyspaces == nil || config.AwsKeyspaces.Keyspace != "test_keyspace" {
+			t.Error("Failed to load DB configs from environment variables")
+		}
+		if config.Aws == nil || config.Aws.AccessKeyId != "test_access_key_id" {
+			t.Error("Failed to load AWS configs from environment variables")
 		}
 
 		// Cleanup
 		os.Clearenv()
 	})
 
-	t.Run("multiple configs error from file", func(t *testing.T) {
+	t.Run("multiple configs from file", func(t *testing.T) {
 		// Create a temporary config file
 		fileContent := `
 			{
@@ -295,10 +297,17 @@ func TestLoadEnv(t *testing.T) {
 		tmpFile := "/tmp/test_config.json"
 		os.WriteFile(tmpFile, []byte(fileContent), 0644)
 		os.Setenv("CONFIG_FILE", tmpFile)
-		LoadEnv(mockLogger)
-		if mockLogger.lastMessage != "Error: You can only provide one of AwsS3, AwsKeyspaces, or LocalFileSystem configurations." {
-			t.Errorf("Expected to get an error for multiple configs but didn't. Message: %s", mockLogger.lastMessage)
+		config := LoadEnv(mockLogger)
+		if config.AwsKeyspaces == nil || config.AwsKeyspaces.Keyspace != "test_keyspace" {
+			t.Error("Failed to load DB configs from file")
 		}
+		if config.Aws == nil || config.Aws.AccessKeyId != "test_access_key_id" {
+			t.Error("Failed to load AWS configs from file")
+		}
+		if config.LocalFileSystem == nil || config.LocalFileSystem.Path != "test_path" {
+			t.Error("Failed to load Filesystem configs from file")
+		}
+
 	})
 
 	t.Run("delegation whitelist disabled - env", func(t *testing.T) {
