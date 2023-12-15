@@ -3,10 +3,17 @@ FROM golang:1.18
 # Set the Current Working Directory inside the container
 WORKDIR $GOPATH/src/delegation_backend
 
+# Install aws cli
+RUN apt-get update && \
+    apt-get install -y awscli
+
 # Copy everything from the current directory to the PWD (Present Working Directory) inside the container
 COPY src src
 COPY database /database
 COPY result/headers result/headers
+
+# Copy authentication script
+COPY scripts/authenticate.sh /bin/authenticate.sh
 
 # Download all the dependencies
 RUN cd src && go get -d -v ./...
