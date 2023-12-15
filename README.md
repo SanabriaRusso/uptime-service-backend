@@ -238,6 +238,8 @@ $ nix-shell
 [nix-shell]$ TAG=uptime-service-backend make docker
 ```
 
+To create the docker image and push it to AWS ECR you can use the [Build and push image to ECR](https://github.com/MinaFoundation/uptime-service-backend/actions/workflows/push-image.yaml) Github action on the target branch or tag.
+
 ## Testing
 
 To run unit tests, enter the `nix-shell` and use the `make test` command:
