@@ -5,10 +5,14 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"os"
 	"path/filepath"
 	"strings"
 	"time"
 
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/sts"
 	"github.com/aws/aws-sigv4-auth-cassandra-gocql-driver-plugin/sigv4"
 	"github.com/gocql/gocql"
 	"github.com/golang-migrate/migrate/v4"
@@ -20,9 +24,35 @@ import (
 // InitializeKeyspaceSession creates a new gocql session for Amazon Keyspaces using the provided configuration.
 func InitializeKeyspaceSession(config *AwsKeyspacesConfig) (*gocql.Session, error) {
 	auth := sigv4.NewAwsAuthenticator()
-	auth.AccessKeyId = config.AccessKeyId
-	auth.SecretAccessKey = config.SecretAccessKey
-	auth.Region = config.Region
+	roleSessionName := os.Getenv("UPTIME_SERVICE_AWS_ROLE_SESSION_NAME")
+	roleArn := os.Getenv("UPTIME_SERVICE_AWS_ROLE_ARN")
+
+	if roleSessionName != "" && roleArn != "" {
+		// If role-related env variables are set, use temporary credentials
+		awsSession, err := session.NewSession(&aws.Config{Region: aws.String(config.Region)})
+		if err != nil {
+			return nil, fmt.Errorf("error creating AWS session: %w", err)
+		}
+
+		stsSvc := sts.New(awsSession)
+		creds, err := stsSvc.AssumeRole(&sts.AssumeRoleInput{
+			RoleArn:         &roleArn,
+			RoleSessionName: &roleSessionName,
+		})
+		if err != nil {
+			return nil, fmt.Errorf("unable to assume role: %w", err)
+		}
+
+		auth.AccessKeyId = *creds.Credentials.AccessKeyId
+		auth.SecretAccessKey = *creds.Credentials.SecretAccessKey
+		auth.SessionToken = *creds.Credentials.SessionToken
+		auth.Region = config.Region
+	} else {
+		// Otherwise, use credentials from the config
+		auth.AccessKeyId = config.AccessKeyId
+		auth.SecretAccessKey = config.SecretAccessKey
+		auth.Region = config.Region
+	}
 
 	// Create a SigV4 gocql cluster config
 	endpoint := "cassandra." + config.Region + ".amazonaws.com"
