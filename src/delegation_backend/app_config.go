@@ -72,17 +72,25 @@ func LoadEnv(log logging.EventLogger) AppConfig {
 
 		// AWSKeyspace configurations
 		if awsKeyspace := os.Getenv("AWS_KEYSPACE"); awsKeyspace != "" {
-			accessKeyId := getEnvChecked("AWS_ACCESS_KEY_ID", log)
-			secretAccessKey := getEnvChecked("AWS_SECRET_ACCESS_KEY", log)
+
 			awsRegion := getEnvChecked("AWS_REGION", log)
 			awsKeyspace := getEnvChecked("AWS_KEYSPACE", log)
 			sslCertificatePath := getEnvChecked("AWS_SSL_CERTIFICATE_PATH", log)
+
+			// if os.Getenv("AWS_KEYSPACE")
+
+			accessKeyId := os.Getenv("AWS_ACCESS_KEY_ID")
+			secretAccessKey := os.Getenv("AWS_SECRET_ACCESS_KEY")
+			roleSessionName := os.Getenv("UPTIME_SERVICE_AWS_ROLE_SESSION_NAME")
+			roleArn := os.Getenv("UPTIME_SERVICE_AWS_ROLE_ARN")
 
 			config.AwsKeyspaces = &AwsKeyspacesConfig{
 				Keyspace:           awsKeyspace,
 				Region:             awsRegion,
 				AccessKeyId:        accessKeyId,
 				SecretAccessKey:    secretAccessKey,
+				RoleSessionName:    roleSessionName,
+				RoleArn:            roleArn,
 				SSLCertificatePath: sslCertificatePath,
 			}
 		}
@@ -138,8 +146,10 @@ type AwsConfig struct {
 type AwsKeyspacesConfig struct {
 	Keyspace           string `json:"keyspace"`
 	Region             string `json:"region"`
-	AccessKeyId        string `json:"access_key_id"`
-	SecretAccessKey    string `json:"secret_access_key"`
+	AccessKeyId        string `json:"access_key_id,omitempty"`
+	SecretAccessKey    string `json:"secret_access_key,omitempty"`
+	RoleSessionName    string `json:"role_session_name,omitempty"`
+	RoleArn            string `json:"role_arn,omitempty"`
 	SSLCertificatePath string `json:"ssl_certificate_path"`
 }
 

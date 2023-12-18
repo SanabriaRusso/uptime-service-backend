@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
-	"os"
 	"path/filepath"
 	"strings"
 	"time"
@@ -24,10 +23,8 @@ import (
 // InitializeKeyspaceSession creates a new gocql session for Amazon Keyspaces using the provided configuration.
 func InitializeKeyspaceSession(config *AwsKeyspacesConfig) (*gocql.Session, error) {
 	auth := sigv4.NewAwsAuthenticator()
-	roleSessionName := os.Getenv("UPTIME_SERVICE_AWS_ROLE_SESSION_NAME")
-	roleArn := os.Getenv("UPTIME_SERVICE_AWS_ROLE_ARN")
 
-	if roleSessionName != "" && roleArn != "" {
+	if config.RoleSessionName != "" && config.RoleArn != "" {
 		// If role-related env variables are set, use temporary credentials
 		awsSession, err := session.NewSession(&aws.Config{Region: aws.String(config.Region)})
 		if err != nil {
@@ -36,8 +33,8 @@ func InitializeKeyspaceSession(config *AwsKeyspacesConfig) (*gocql.Session, erro
 
 		stsSvc := sts.New(awsSession)
 		creds, err := stsSvc.AssumeRole(&sts.AssumeRoleInput{
-			RoleArn:         &roleArn,
-			RoleSessionName: &roleSessionName,
+			RoleArn:         &config.RoleArn,
+			RoleSessionName: &config.RoleSessionName,
 		})
 		if err != nil {
 			return nil, fmt.Errorf("unable to assume role: %w", err)
