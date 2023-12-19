@@ -77,12 +77,12 @@ func LoadEnv(log logging.EventLogger) AppConfig {
 			awsKeyspace := getEnvChecked("AWS_KEYSPACE", log)
 			sslCertificatePath := getEnvChecked("AWS_SSL_CERTIFICATE_PATH", log)
 
-			// if os.Getenv("AWS_KEYSPACE")
-
-			accessKeyId := os.Getenv("AWS_ACCESS_KEY_ID")
-			secretAccessKey := os.Getenv("AWS_SECRET_ACCESS_KEY")
+			// if roleSessionName and roleArn are set, we are using AWS STS to assume a role and get temporary credentials
+			// if they are not set, we are using AWS IAM user credentials
 			roleSessionName := os.Getenv("UPTIME_SERVICE_AWS_ROLE_SESSION_NAME")
 			roleArn := os.Getenv("UPTIME_SERVICE_AWS_ROLE_ARN")
+			accessKeyId := os.Getenv("AWS_ACCESS_KEY_ID")
+			secretAccessKey := os.Getenv("AWS_SECRET_ACCESS_KEY")
 
 			config.AwsKeyspaces = &AwsKeyspacesConfig{
 				Keyspace:           awsKeyspace,
