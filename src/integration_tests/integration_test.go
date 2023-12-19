@@ -22,7 +22,7 @@ func init() {
 	if err != nil {
 		log.Fatalf("Failed to migrate up: %v", err)
 	}
-	tables := []string{"schema_migrations", "submissions", "blocks"}
+	tables := []string{"schema_migrations", "submissions"}
 	err = WaitForTablesActive(config.AwsKeyspaces, tables)
 	if err != nil {
 		log.Fatalf("Failed to wait for tables to be active: %v", err)

@@ -9,34 +9,29 @@ import (
 	"github.com/gocql/gocql"
 )
 
-func checkForBlocks(session *gocql.Session, keyspace string) (bool, error) {
-	var blockHash string
-	query := fmt.Sprintf("SELECT block_hash FROM %s.blocks LIMIT 1", keyspace)
-	if err := session.Query(query).Scan(&blockHash); err != nil {
-		if err == gocql.ErrNotFound {
-			return false, nil // No blocks found
-		}
-		return false, err // An error occurred
-	}
-	log.Printf("Found block: %s\n", blockHash)
-	return true, nil // At least one block found
-}
-
 func checkForSubmissions(session *gocql.Session, keyspace, date string) (bool, error) {
-	var submitter string
-	query := fmt.Sprintf("SELECT submitter FROM %s.submissions WHERE submitted_at_date='%s' LIMIT 1", keyspace, date)
-	if err := session.Query(query).Scan(&submitter); err != nil {
+	var submitter, blockHash, rawBlock string
+
+	query := fmt.Sprintf("SELECT submitter, block_hash, raw_block FROM %s.submissions WHERE submitted_at_date='%s' LIMIT 1", keyspace, date)
+
+	if err := session.Query(query).Scan(&submitter, &blockHash, &rawBlock); err != nil {
 		if err == gocql.ErrNotFound {
-			return false, nil // No submissions found for today
+			return false, nil
 		}
-		return false, err // An error occurred
+		return false, err
 	}
-	log.Printf("Found submission for today: %s\n", submitter)
-	return true, nil // At least one submission found for today
+
+	if submitter == "" || blockHash == "" || rawBlock == "" {
+		log.Printf("Found submission for today with empty required fields\n")
+		return false, nil // Found a row but required fields are empty
+	}
+
+	log.Printf("Found valid submission for today: submitter=%s, block_hash=%s\n", submitter, blockHash)
+	return true, nil // Valid submission found with all required fields
 }
 
 func waitUntilKeyspacesHasBlocksAndSubmissions(config dg.AppConfig) error {
-	log.Printf("Waiting for blocks and submissions to appear in Keyspaces")
+	log.Printf("Waiting for submissions to appear in Keyspaces")
 
 	sess, err := dg.InitializeKeyspaceSession(config.AwsKeyspaces)
 	if err != nil {
@@ -53,19 +48,14 @@ func waitUntilKeyspacesHasBlocksAndSubmissions(config dg.AppConfig) error {
 		case <-timeout:
 			return fmt.Errorf("timeout reached while waiting for Keyspaces contents")
 		case <-tick:
-			hasBlocks, err := checkForBlocks(sess, config.AwsKeyspaces.Keyspace)
-			if err != nil {
-				return err
-			}
 
 			hasSubmissionsForToday, err := checkForSubmissions(sess, config.AwsKeyspaces.Keyspace, currentDate)
 			if err != nil {
 				return err
 			}
 
-			// If both blocks and submissions for today are found, return
-			if hasBlocks && hasSubmissionsForToday {
-				log.Printf("Found blocks and submissions for today in Keyspaces")
+			if hasSubmissionsForToday {
+				log.Printf("Found submissions for today in Keyspaces")
 				return nil
 			}
 		}
