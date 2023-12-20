@@ -5,6 +5,7 @@ CREATE TABLE IF NOT EXISTS submissions (
     submitter TEXT,
     created_at TIMESTAMP,
     block_hash TEXT,
+    raw_block BLOB,
     remote_addr TEXT,
     peer_id TEXT,
     snark_work BLOB,

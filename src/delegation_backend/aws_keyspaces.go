@@ -55,6 +55,7 @@ type Submission struct {
 	RemoteAddr         string    `json:"remote_addr"`
 	PeerId             string    `json:"peer_id"`
 	Submitter          string    `json:"submitter"` // is base58check-encoded submitter's public key
+	RawBlock           []byte    `json:"raw_block,omitempty"`
 	SnarkWork          []byte    `json:"snark_work,omitempty"`
 	GraphqlControlPort int       `json:"graphql_control_port,omitempty"`
 	BuiltWithCommitSha string    `json:"built_with_commit_sha,omitempty"`
@@ -122,59 +123,71 @@ type KeyspaceContext struct {
 // Insert a submission into the Keyspaces database
 func (kc *KeyspaceContext) insertSubmission(submission *Submission) error {
 	return ExponentialBackoff(func() error {
-		return kc.Session.Query(
-			"INSERT INTO "+kc.Keyspace+".submissions (submitted_at_date, submitted_at, submitter, remote_addr, peer_id, snark_work, block_hash, created_at, graphql_control_port, built_with_commit_sha) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-			submission.SubmittedAtDate,
-			submission.SubmittedAt,
-			submission.Submitter,
-			submission.RemoteAddr,
-			submission.PeerId,
-			submission.SnarkWork,
-			submission.BlockHash,
-			submission.CreatedAt,
-			submission.GraphqlControlPort,
-			submission.BuiltWithCommitSha,
-		).Exec()
+		if err := kc.tryInsertSubmission(submission, true); err != nil {
+			if isRowSizeError(err) {
+				kc.Log.Warnf("KeyspaceSave: Block too large, inserting without raw_block")
+				return kc.tryInsertSubmission(submission, false)
+			}
+			return err
+		}
+		return nil
 	}, maxRetries, initialBackoff)
 }
 
-// Insert a block into the Keyspaces database
-func (kc *KeyspaceContext) insertBlock(block *Block) error {
-	return ExponentialBackoff(func() error {
-		return kc.Session.Query(
-			"INSERT INTO "+kc.Keyspace+".blocks (block_hash, raw_block) VALUES (?, ?)",
-			block.BlockHash,
-			block.RawBlock,
-		).Exec()
-	}, maxRetries, initialBackoff)
+func (kc *KeyspaceContext) tryInsertSubmission(submission *Submission, includeRawBlock bool) error {
+	query := "INSERT INTO " + kc.Keyspace + ".submissions (submitted_at_date, submitted_at, submitter, remote_addr, peer_id, snark_work, block_hash, created_at, graphql_control_port, built_with_commit_sha"
+	values := []interface{}{submission.SubmittedAtDate, submission.SubmittedAt, submission.Submitter, submission.RemoteAddr, submission.PeerId, submission.SnarkWork, submission.BlockHash, submission.CreatedAt, submission.GraphqlControlPort, submission.BuiltWithCommitSha}
+	if includeRawBlock {
+		query += ", raw_block) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+		values = append(values, submission.RawBlock)
+	} else {
+		query += ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+	}
+	return kc.Session.Query(query, values...).Exec()
+}
+
+func isRowSizeError(err error) bool {
+	// Replace with more robust error checking if possible
+	return strings.Contains(err.Error(), "The update would cause the row to exceed the maximum allowed size")
 }
 
 // KeyspaceSave saves the provided objects into Amazon Keyspaces.
 func (kc *KeyspaceContext) KeyspaceSave(objs ObjectsToSave) {
+	var submissionToSave *Submission = &Submission{}
 	for path, bs := range objs {
 		if strings.HasPrefix(path, "submissions/") {
 			submission, err := kc.parseSubmissionBytes(bs, path)
-			kc.Log.Debugf("KeyspaceSave: Saving submission for block: %v, submitter: %v, submitted_at: %v", submission.BlockHash, submission.Submitter, submission.SubmittedAt)
 			if err != nil {
 				kc.Log.Warnf("KeyspaceSave: Error parsing submission JSON: %v", err)
 				continue
 			}
-			if err := kc.insertSubmission(submission); err != nil {
-				kc.Log.Warnf("KeyspaceSave: Error saving submission to Keyspaces: %v", err)
-			}
+			submissionToSave.BlockHash = submission.BlockHash
+			submissionToSave.CreatedAt = submission.CreatedAt
+			submissionToSave.GraphqlControlPort = submission.GraphqlControlPort
+			submissionToSave.PeerId = submission.PeerId
+			submissionToSave.RemoteAddr = submission.RemoteAddr
+			submissionToSave.SnarkWork = submission.SnarkWork
+			submissionToSave.SubmittedAt = submission.SubmittedAt
+			submissionToSave.SubmittedAtDate = submission.SubmittedAtDate
+			submissionToSave.Submitter = submission.Submitter
+			submissionToSave.BuiltWithCommitSha = submission.BuiltWithCommitSha
+
 		} else if strings.HasPrefix(path, "blocks/") {
 			block, err := kc.parseBlockBytes(bs, path)
-			kc.Log.Debugf("KeyspaceSave: Saving block: %v", block.BlockHash)
 			if err != nil {
 				kc.Log.Warnf("KeyspaceSave: Error parsing block file: %v", err)
 				continue
 			}
-			if err := kc.insertBlock(block); err != nil {
-				kc.Log.Warnf("KeyspaceSave: Error saving block to Keyspaces: %v", err)
-			}
+			submissionToSave.RawBlock = block.RawBlock
+			submissionToSave.BlockHash = block.BlockHash
 		} else {
 			kc.Log.Warnf("KeyspaceSave: Unknown path format: %s", path)
 		}
+
+	}
+	kc.Log.Debugf("KeyspaceSave: Saving submission for block: %v, submitter: %v, submitted_at: %v", submissionToSave.BlockHash, submissionToSave.Submitter, submissionToSave.SubmittedAt)
+	if err := kc.insertSubmission(submissionToSave); err != nil {
+		kc.Log.Warnf("KeyspaceSave: Error saving submission to Keyspaces: %v", err)
 	}
 }
 
