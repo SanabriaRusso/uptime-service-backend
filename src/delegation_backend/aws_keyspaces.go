@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"os"
 	"path/filepath"
 	"strings"
 	"time"
@@ -24,17 +25,24 @@ import (
 func InitializeKeyspaceSession(config *AwsKeyspacesConfig) (*gocql.Session, error) {
 	auth := sigv4.NewAwsAuthenticator()
 
-	if config.RoleSessionName != "" && config.RoleArn != "" {
+	if config.RoleSessionName != "" && config.RoleArn != "" && config.WebIdentityTokenFile != "" {
 		// If role-related env variables are set, use temporary credentials
+		tokenBytes, err := os.ReadFile(config.WebIdentityTokenFile)
+		if err != nil {
+			return nil, fmt.Errorf("error reading web identity token file: %w", err)
+		}
+		webIdentityToken := string(tokenBytes)
+
 		awsSession, err := session.NewSession(&aws.Config{Region: aws.String(config.Region)})
 		if err != nil {
 			return nil, fmt.Errorf("error creating AWS session: %w", err)
 		}
 
 		stsSvc := sts.New(awsSession)
-		creds, err := stsSvc.AssumeRole(&sts.AssumeRoleInput{
-			RoleArn:         &config.RoleArn,
-			RoleSessionName: &config.RoleSessionName,
+		creds, err := stsSvc.AssumeRoleWithWebIdentity(&sts.AssumeRoleWithWebIdentityInput{
+			RoleArn:          &config.RoleArn,
+			RoleSessionName:  &config.RoleSessionName,
+			WebIdentityToken: &webIdentityToken,
 		})
 		if err != nil {
 			return nil, fmt.Errorf("unable to assume role: %w", err)

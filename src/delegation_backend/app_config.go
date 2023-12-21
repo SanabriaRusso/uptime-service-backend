@@ -78,8 +78,10 @@ func LoadEnv(log logging.EventLogger) AppConfig {
 			awsKeyspace := getEnvChecked("AWS_KEYSPACE", log)
 			sslCertificatePath := getEnvChecked("AWS_SSL_CERTIFICATE_PATH", log)
 
-			// if roleSessionName and roleArn are set, we are using AWS STS to assume a role and get temporary credentials
+			// if webIdentityTokenFile, roleSessionName and roleArn are set,
+			// we are using AWS STS to assume a role and get temporary credentials
 			// if they are not set, we are using AWS IAM user credentials
+			webIdentityTokenFile := os.Getenv("UPTIME_SERVICE_AWS_WEB_IDENTITY_TOKEN_FILE")
 			roleSessionName := os.Getenv("UPTIME_SERVICE_AWS_ROLE_SESSION_NAME")
 			roleArn := os.Getenv("UPTIME_SERVICE_AWS_ROLE_ARN")
 			// accessKeyId, secretAccessKey are not mandatory for production set up
@@ -87,13 +89,14 @@ func LoadEnv(log logging.EventLogger) AppConfig {
 			secretAccessKey := os.Getenv("AWS_SECRET_ACCESS_KEY")
 
 			config.AwsKeyspaces = &AwsKeyspacesConfig{
-				Keyspace:           awsKeyspace,
-				Region:             awsRegion,
-				AccessKeyId:        accessKeyId,
-				SecretAccessKey:    secretAccessKey,
-				RoleSessionName:    roleSessionName,
-				RoleArn:            roleArn,
-				SSLCertificatePath: sslCertificatePath,
+				Keyspace:             awsKeyspace,
+				Region:               awsRegion,
+				AccessKeyId:          accessKeyId,
+				SecretAccessKey:      secretAccessKey,
+				WebIdentityTokenFile: webIdentityTokenFile,
+				RoleSessionName:      roleSessionName,
+				RoleArn:              roleArn,
+				SSLCertificatePath:   sslCertificatePath,
 			}
 		}
 
@@ -146,13 +149,14 @@ type AwsConfig struct {
 }
 
 type AwsKeyspacesConfig struct {
-	Keyspace           string `json:"keyspace"`
-	Region             string `json:"region"`
-	AccessKeyId        string `json:"access_key_id,omitempty"`
-	SecretAccessKey    string `json:"secret_access_key,omitempty"`
-	RoleSessionName    string `json:"role_session_name,omitempty"`
-	RoleArn            string `json:"role_arn,omitempty"`
-	SSLCertificatePath string `json:"ssl_certificate_path"`
+	Keyspace             string `json:"keyspace"`
+	Region               string `json:"region"`
+	AccessKeyId          string `json:"access_key_id,omitempty"`
+	SecretAccessKey      string `json:"secret_access_key,omitempty"`
+	WebIdentityTokenFile string `json:"web_identity_token_file,omitempty"`
+	RoleSessionName      string `json:"role_session_name,omitempty"`
+	RoleArn              string `json:"role_arn,omitempty"`
+	SSLCertificatePath   string `json:"ssl_certificate_path"`
 }
 
 type LocalFileSystemConfig struct {
