@@ -55,6 +55,7 @@ func LoadEnv(log logging.EventLogger) AppConfig {
 
 		// AWS configurations
 		if bucketNameSuffix := os.Getenv("AWS_BUCKET_NAME_SUFFIX"); bucketNameSuffix != "" {
+			// accessKeyId, secretAccessKey are not mandatory for production set up
 			accessKeyId := os.Getenv("AWS_ACCESS_KEY_ID")
 			secretAccessKey := os.Getenv("AWS_SECRET_ACCESS_KEY")
 			awsRegion := getEnvChecked("AWS_REGION", log)
@@ -81,6 +82,7 @@ func LoadEnv(log logging.EventLogger) AppConfig {
 			// if they are not set, we are using AWS IAM user credentials
 			roleSessionName := os.Getenv("UPTIME_SERVICE_AWS_ROLE_SESSION_NAME")
 			roleArn := os.Getenv("UPTIME_SERVICE_AWS_ROLE_ARN")
+			// accessKeyId, secretAccessKey are not mandatory for production set up
 			accessKeyId := os.Getenv("AWS_ACCESS_KEY_ID")
 			secretAccessKey := os.Getenv("AWS_SECRET_ACCESS_KEY")
 
