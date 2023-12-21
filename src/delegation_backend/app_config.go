@@ -55,8 +55,8 @@ func LoadEnv(log logging.EventLogger) AppConfig {
 
 		// AWS configurations
 		if bucketNameSuffix := os.Getenv("AWS_BUCKET_NAME_SUFFIX"); bucketNameSuffix != "" {
-			accessKeyId := getEnvChecked("AWS_ACCESS_KEY_ID", log)
-			secretAccessKey := getEnvChecked("AWS_SECRET_ACCESS_KEY", log)
+			accessKeyId := os.Getenv("AWS_ACCESS_KEY_ID")
+			secretAccessKey := os.Getenv("AWS_SECRET_ACCESS_KEY")
 			awsRegion := getEnvChecked("AWS_REGION", log)
 			awsAccountId := getEnvChecked("AWS_ACCOUNT_ID", log)
 			bucketNameSuffix := getEnvChecked("AWS_BUCKET_NAME_SUFFIX", log)
