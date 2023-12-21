@@ -118,11 +118,11 @@ If the `CONFIG_FILE` environment variable is not set, the program will fall back
 4. **AWS Keyspaces Configuration**:
    - `AWS_KEYSPACE` - Your AWS Keyspace name.
    - `AWS_REGION` - The AWS region (same as used for S3).
-   - `UPTIME_SERVICE_AWS_WEB_IDENTITY_TOKEN_FILE` - AWS web identity token file.
-   - `UPTIME_SERVICE_AWS_ROLE_SESSION_NAME` - AWS role session name.
-   - `UPTIME_SERVICE_AWS_ROLE_ARN` - AWS role arn.
-   - `AWS_ACCESS_KEY_ID` - Your AWS Access Key ID (same as used for S3). No need to set it if `UPTIME_SERVICE_AWS_*` env variables are set. 
-   - `AWS_SECRET_ACCESS_KEY` - Your AWS Secret Access Key (same as used for S3). No need to set it if `UPTIME_SERVICE_AWS_*` env variables are set.
+   - `AWS_WEB_IDENTITY_TOKEN_FILE` - AWS web identity token file.
+   - `AWS_ROLE_SESSION_NAME` - AWS role session name.
+   - `AWS_ROLE_ARN` - AWS role arn.
+   - `AWS_ACCESS_KEY_ID` - Your AWS Access Key ID. No need to set if `AWS_WEB_IDENTITY_TOKEN_FILE`, `AWS_ROLE_SESSION_NAME` and `AWS_ROLE_ARN` are set.
+   - `AWS_SECRET_ACCESS_KEY` - Your AWS Secret Access Key. No need to set if `AWS_WEB_IDENTITY_TOKEN_FILE`, `AWS_ROLE_SESSION_NAME` and `AWS_ROLE_ARN` are set.
    - `AWS_SSL_CERTIFICATE_PATH` - The path to your SSL certificate for AWS Keyspaces.
 
 > **Note:** Docker image already includes cert and has `AWS_SSL_CERTIFICATE_PATH` set up, however it can be overriden by providing this env variable to docker.
