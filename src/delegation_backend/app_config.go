@@ -81,9 +81,9 @@ func LoadEnv(log logging.EventLogger) AppConfig {
 			// if webIdentityTokenFile, roleSessionName and roleArn are set,
 			// we are using AWS STS to assume a role and get temporary credentials
 			// if they are not set, we are using AWS IAM user credentials
-			webIdentityTokenFile := os.Getenv("UPTIME_SERVICE_AWS_WEB_IDENTITY_TOKEN_FILE")
+			webIdentityTokenFile := os.Getenv("AWS_WEB_IDENTITY_TOKEN_FILE")
 			roleSessionName := os.Getenv("UPTIME_SERVICE_AWS_ROLE_SESSION_NAME")
-			roleArn := os.Getenv("UPTIME_SERVICE_AWS_ROLE_ARN")
+			roleArn := os.Getenv("AWS_ROLE_ARN")
 			// accessKeyId, secretAccessKey are not mandatory for production set up
 			accessKeyId := os.Getenv("AWS_ACCESS_KEY_ID")
 			secretAccessKey := os.Getenv("AWS_SECRET_ACCESS_KEY")
