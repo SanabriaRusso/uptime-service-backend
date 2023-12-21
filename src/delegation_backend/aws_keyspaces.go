@@ -5,10 +5,14 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"os"
 	"path/filepath"
 	"strings"
 	"time"
 
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/sts"
 	"github.com/aws/aws-sigv4-auth-cassandra-gocql-driver-plugin/sigv4"
 	"github.com/gocql/gocql"
 	"github.com/golang-migrate/migrate/v4"
@@ -20,9 +24,40 @@ import (
 // InitializeKeyspaceSession creates a new gocql session for Amazon Keyspaces using the provided configuration.
 func InitializeKeyspaceSession(config *AwsKeyspacesConfig) (*gocql.Session, error) {
 	auth := sigv4.NewAwsAuthenticator()
-	auth.AccessKeyId = config.AccessKeyId
-	auth.SecretAccessKey = config.SecretAccessKey
-	auth.Region = config.Region
+
+	if config.RoleSessionName != "" && config.RoleArn != "" && config.WebIdentityTokenFile != "" {
+		// If role-related env variables are set, use temporary credentials
+		tokenBytes, err := os.ReadFile(config.WebIdentityTokenFile)
+		if err != nil {
+			return nil, fmt.Errorf("error reading web identity token file: %w", err)
+		}
+		webIdentityToken := string(tokenBytes)
+
+		awsSession, err := session.NewSession(&aws.Config{Region: aws.String(config.Region)})
+		if err != nil {
+			return nil, fmt.Errorf("error creating AWS session: %w", err)
+		}
+
+		stsSvc := sts.New(awsSession)
+		creds, err := stsSvc.AssumeRoleWithWebIdentity(&sts.AssumeRoleWithWebIdentityInput{
+			RoleArn:          &config.RoleArn,
+			RoleSessionName:  &config.RoleSessionName,
+			WebIdentityToken: &webIdentityToken,
+		})
+		if err != nil {
+			return nil, fmt.Errorf("unable to assume role: %w", err)
+		}
+
+		auth.AccessKeyId = *creds.Credentials.AccessKeyId
+		auth.SecretAccessKey = *creds.Credentials.SecretAccessKey
+		auth.SessionToken = *creds.Credentials.SessionToken
+		auth.Region = config.Region
+	} else {
+		// Otherwise, use credentials from the config
+		auth.AccessKeyId = config.AccessKeyId
+		auth.SecretAccessKey = config.SecretAccessKey
+		auth.Region = config.Region
+	}
 
 	// Create a SigV4 gocql cluster config
 	endpoint := "cassandra." + config.Region + ".amazonaws.com"
