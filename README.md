@@ -9,7 +9,7 @@ As part of delegation program, nodes are to upload some proof of their activity.
 
 - `MAX_SUBMIT_PAYLOAD_SIZE` : max size (in bytes) of the `POST /submit` payload
 - `REQUESTS_PER_IP_HOURLY` : max amount of requests per hour per  IP address
-- `REQUESTS_PER_PK_HOURLY` : max amount of requests per hour per public key `submitter`
+- `REQUESTS_PER_PK_HOURLY` : max amount of requests per hour per public key `submitter` [default: 120, can be overriden by setting `REQUESTS_PER_PK_HOURLY` env variable].
 
 ## Protocol
 
