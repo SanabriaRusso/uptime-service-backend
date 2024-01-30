@@ -4,6 +4,8 @@ import (
 	. "block_producers_uptime/delegation_backend"
 	"context"
 	"net/http"
+	"os"
+	"strconv"
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -13,6 +15,23 @@ import (
 	"google.golang.org/api/option"
 	sheets "google.golang.org/api/sheets/v4"
 )
+
+var requestsPerPkHourly int
+
+func init() {
+	var defaultValue = 120
+	var err error
+
+	envVarValue, exists := os.LookupEnv("REQUESTS_PER_PK_HOURLY")
+	if exists {
+		requestsPerPkHourly, err = strconv.Atoi(envVarValue)
+		if err != nil {
+			requestsPerPkHourly = defaultValue
+		}
+	} else {
+		requestsPerPkHourly = defaultValue
+	}
+}
 
 func main() {
 	// Setup logging
@@ -85,7 +104,8 @@ func main() {
 
 	// App other configurations
 	app.Now = func() time.Time { return time.Now() }
-	app.SubmitCounter = NewAttemptCounter(REQUESTS_PER_PK_HOURLY)
+	app.SubmitCounter = NewAttemptCounter(requestsPerPkHourly)
+	log.Infof("Max requests per pk hourly: %v", requestsPerPkHourly)
 
 	// HTTP handlers setup
 	http.HandleFunc("/", func(rw http.ResponseWriter, r *http.Request) {
