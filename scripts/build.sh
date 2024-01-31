@@ -22,11 +22,11 @@ cp "$ref_signer"/*.h "$OUT/headers"
 
 case "$1" in
   db-migrate-up)
-    cd src/cmd/db_migration 
+    cd src/cmd/db_migration
     $GO run main.go up
     ;;
   db-migrate-down)
-    cd src/cmd/db_migration 
+    cd src/cmd/db_migration
     $GO run main.go down
     ;;
   test)
@@ -42,8 +42,8 @@ case "$1" in
       echo "Specify TAG env variable."
       exit 1
     fi
-    # set image name to 673156464838.dkr.ecr.us-west-2.amazonaws.com/block-producers-uptime if IMAGE_NAME is not set
-    IMAGE_NAME=${IMAGE_NAME:-673156464838.dkr.ecr.us-west-2.amazonaws.com/block-producers-uptime}
+    # set image name to 673156464838.dkr.ecr.us-west-2.amazonaws.com/uptime-service-backend if IMAGE_NAME is not set
+    IMAGE_NAME=${IMAGE_NAME:-673156464838.dkr.ecr.us-west-2.amazonaws.com/uptime-service-backend}
     docker build -t "$IMAGE_NAME:$TAG" -f dockerfiles/Dockerfile-delegation-backend .
     ;;
   "")
