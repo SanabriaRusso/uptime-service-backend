@@ -160,7 +160,7 @@ docker run \
 -e DELEGATION_WHITELIST_DISABLED=1 \
 -e CONFIG_NETWORK_NAME=integration-test \
 --entrypoint db_migration \
-673156464838.dkr.ecr.us-west-2.amazonaws.com/block-producers-uptime:$TAG up
+673156464838.dkr.ecr.us-west-2.amazonaws.com/uptime-service-backend:$TAG up
 
 # To migrate database down
 docker run \
@@ -171,7 +171,7 @@ docker run \
 -e DELEGATION_WHITELIST_DISABLED=1 \
 -e CONFIG_NETWORK_NAME=integration-test \
 --entrypoint db_migration \
-673156464838.dkr.ecr.us-west-2.amazonaws.com/block-producers-uptime:$TAG down
+673156464838.dkr.ecr.us-west-2.amazonaws.com/uptime-service-backend:$TAG down
 ```
 
 Once you have set up your configuration using either a JSON file or environment variables, you can proceed to run the program. The program will automatically load the configuration and initialize based on the provided settings.

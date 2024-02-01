@@ -131,7 +131,7 @@ configuration file. The configuration file can look like this:
   "output": {
     "stdout": "true",
     "local": "/home/user/uptime-data/uptime_2023-10-30.csv",
-    "s3_bucket": "673156464838-block-producers-uptime",
+    "s3_bucket": "673156464838-uptime-service-backend",
     "s3_key": "berkeley/summary_2023-10-30.csv"
   }
 }
