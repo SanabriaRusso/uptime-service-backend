@@ -5,5 +5,5 @@ const IDENTITY_COLUMN = "A"
 const LETTER_A_ASCII_CODE = 65
 
 func GetBucketName(config AppConfig) string {
-	return config.Aws.AccountId + "-block-producers-uptime"
+	return config.Aws.AccountId + "-uptime-service-backend"
 }
