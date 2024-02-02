@@ -85,7 +85,9 @@ func main() {
 
 	// App other configurations
 	app.Now = func() time.Time { return time.Now() }
-	app.SubmitCounter = NewAttemptCounter(REQUESTS_PER_PK_HOURLY)
+	requestsPerPkHourly := SetRequestsPerPkHourly(log)
+	app.SubmitCounter = NewAttemptCounter(requestsPerPkHourly)
+	log.Infof("Max requests per pk hourly: %v", requestsPerPkHourly)
 
 	// HTTP handlers setup
 	http.HandleFunc("/", func(rw http.ResponseWriter, r *http.Request) {
