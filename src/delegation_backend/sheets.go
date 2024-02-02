@@ -44,7 +44,7 @@ func RetrieveWhitelist(service *sheets.Service, log *logging.ZapEventLogger, app
 	retries := 10
 	err = ExponentialBackoff(operation, retries, initialBackoff)
 	if err != nil {
-		log.Fatalf("Unable to retrieve data from sheet after %v retries: %v", retries, err)
+		log.Errorf("Unable to retrieve data from sheet after %v retries: %v", retries, err)
 	}
 
 	return processRows(resp.Values)
