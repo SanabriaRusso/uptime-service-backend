@@ -132,7 +132,7 @@ If the `CONFIG_FILE` environment variable is not set, the program will fall back
 
 ### Important Notes
 
-- At least one of the following storage options is required: `AwsS3`, `AwsKeyspaces`, or `LocalFileSystem`. Multi-storage configuration is also supported, allowing for a combination of these storage options. 
+- At least one of the following storage options is required: `AwsS3`, `AwsKeyspaces`, or `LocalFileSystem`. Multi-storage configuration is also supported, allowing for a combination of these storage options.
 - Ensure that all necessary environment variables are set. If any required variable is missing, the program will terminate with an error.
 
 ### Database Migration
@@ -142,7 +142,7 @@ When using `AWSKeyspaces` as storage for the first time one needs to run databas
 ```bash
 $ nix-shell
 # To migrate database up
-[nix-shell]$ make db-migrate-up 
+[nix-shell]$ make db-migrate-up
 
 # To migrate database down
 [nix-shell]$ make db-migrate-down
@@ -160,7 +160,7 @@ docker run \
 -e DELEGATION_WHITELIST_DISABLED=1 \
 -e CONFIG_NETWORK_NAME=integration-test \
 --entrypoint db_migration \
-673156464838.dkr.ecr.us-west-2.amazonaws.com/block-producers-uptime:$TAG up
+673156464838.dkr.ecr.us-west-2.amazonaws.com/uptime-service-backend:$TAG up
 
 # To migrate database down
 docker run \
@@ -171,7 +171,7 @@ docker run \
 -e DELEGATION_WHITELIST_DISABLED=1 \
 -e CONFIG_NETWORK_NAME=integration-test \
 --entrypoint db_migration \
-673156464838.dkr.ecr.us-west-2.amazonaws.com/block-producers-uptime:$TAG down
+673156464838.dkr.ecr.us-west-2.amazonaws.com/uptime-service-backend:$TAG down
 ```
 
 Once you have set up your configuration using either a JSON file or environment variables, you can proceed to run the program. The program will automatically load the configuration and initialize based on the provided settings.
@@ -255,14 +255,14 @@ $ nix-shell
 To execute the integration tests, you will need the `UPTIME_SERVICE_SECRET` passphrase. This is essential to decrypt the uptime service configuration files.
 
 ### Steps to run integration tests
- 
+
 1. **Build the Docker Image**:
 
     ```bash
     $ nix-shell
     [nix-shell]$ export IMAGE_NAME=uptime-service-backend
     [nix-shell]$ export TAG=integration-test
-    [nix-shell]$ make docker 
+    [nix-shell]$ make docker
     ```
 
 2. **Run the Integration Tests**:
@@ -270,7 +270,7 @@ To execute the integration tests, you will need the `UPTIME_SERVICE_SECRET` pass
     ```bash
     $ nix-shell
     [nix-shell]$ export UPTIME_SERVICE_SECRET=YOUR_SECRET_HERE
-    [nix-shell]$ make integration-test 
+    [nix-shell]$ make integration-test
     ```
 
 > **Note:** Replace `YOUR_SECRET_HERE` with the appropriate value for `UPTIME_SERVICE_SECRET`.
