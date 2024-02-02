@@ -2,7 +2,10 @@ package delegation_backend
 
 import (
 	"os"
+	"strconv"
 	"time"
+
+	logging "github.com/ipfs/go-log/v2"
 )
 
 const MAX_SUBMIT_PAYLOAD_SIZE = 50000000 // max payload size in bytes
@@ -19,6 +22,24 @@ func NetworkId() uint8 {
 		return 1
 	}
 	return 0
+}
+
+func SetRequestsPerPkHourly(log logging.StandardLogger) int {
+	var defaultValue = 120
+	var requestsPerPkHourly int
+	var err error
+
+	envVarValue, exists := os.LookupEnv("REQUESTS_PER_PK_HOURLY")
+	if exists {
+		requestsPerPkHourly, err = strconv.Atoi(envVarValue)
+		if err != nil {
+			log.Warnf("Error parsing REQUESTS_PER_PK_HOURLY, falling back to default value: %v, error: %v", defaultValue, err)
+			requestsPerPkHourly = defaultValue
+		}
+	} else {
+		requestsPerPkHourly = defaultValue
+	}
+	return requestsPerPkHourly
 }
 
 const PK_LENGTH = 33  // one field element (32B) + 1 bit (encoded as full byte)
