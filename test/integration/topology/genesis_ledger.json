@@ -7,6 +7,7 @@
         "delta": 0,
         "slots_per_epoch": 240,
         "slots_per_sub_window": 2,
+        "grace_period_slots": 60,
         "genesis_state_timestamp": "2023-10-16 12:00:03.092497Z"
     },
     "proof": {
