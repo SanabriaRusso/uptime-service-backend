@@ -12,7 +12,7 @@ on:
         type: string
 env:
   ECR_REPOSITORY_URL: 673156464838.dkr.ecr.us-west-2.amazonaws.com
-  ECR_REPOSITORY_NAME: block-producers-uptime
+  ECR_REPOSITORY_NAME: uptime-service-backend
   DOCKER_TAG_PREFIX: ${{ github.event.inputs.docker_tag_prefix }}
 
 # This allows a subsequently queued workflow run to interrupt previous runs
