@@ -70,7 +70,7 @@ func InitializeKeyspaceSession(config *AwsKeyspacesConfig) (*gocql.Session, erro
 		EnableHostVerification: false,
 	}
 
-	cluster.Consistency = gocql.LocalQuorum
+	cluster.Consistency = gocql.Any
 	cluster.DisableInitialHostLookup = false
 
 	// Create a SigV4 gocql session
