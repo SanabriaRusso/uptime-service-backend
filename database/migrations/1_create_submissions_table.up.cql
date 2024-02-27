@@ -1,6 +1,7 @@
 CREATE TABLE IF NOT EXISTS submissions (
     // filled by uptime_service_backend
     submitted_at_date TEXT,
+    shard INT,
     submitted_at TIMESTAMP,
     submitter TEXT,
     created_at TIMESTAMP,
@@ -19,5 +20,5 @@ CREATE TABLE IF NOT EXISTS submissions (
     validation_error TEXT,
     // was it verified by zk-validator
     verified BOOLEAN,
-    PRIMARY KEY (submitted_at_date, submitted_at, submitter)
+    PRIMARY KEY ((submitted_at_date, shard), submitted_at, submitter)
 );

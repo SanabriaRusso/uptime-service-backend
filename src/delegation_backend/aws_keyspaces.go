@@ -200,14 +200,19 @@ func (kc *KeyspaceContext) insertSubmission(submission *Submission) error {
 	}, maxRetries, initialBackoff)
 }
 
+func calculateShard(submittedAt time.Time) int {
+	// return minute of the hour
+	return submittedAt.Minute()
+}
+
 func (kc *KeyspaceContext) tryInsertSubmission(submission *Submission, includeRawBlock bool) error {
-	query := "INSERT INTO " + kc.Keyspace + ".submissions (submitted_at_date, submitted_at, submitter, remote_addr, peer_id, snark_work, block_hash, created_at, graphql_control_port, built_with_commit_sha"
-	values := []interface{}{submission.SubmittedAtDate, submission.SubmittedAt, submission.Submitter, submission.RemoteAddr, submission.PeerId, submission.SnarkWork, submission.BlockHash, submission.CreatedAt, submission.GraphqlControlPort, submission.BuiltWithCommitSha}
+	query := "INSERT INTO " + kc.Keyspace + ".submissions (submitted_at_date, shard, submitted_at, submitter, remote_addr, peer_id, snark_work, block_hash, created_at, graphql_control_port, built_with_commit_sha"
+	values := []interface{}{submission.SubmittedAtDate, calculateShard(submission.SubmittedAt), submission.SubmittedAt, submission.Submitter, submission.RemoteAddr, submission.PeerId, submission.SnarkWork, submission.BlockHash, submission.CreatedAt, submission.GraphqlControlPort, submission.BuiltWithCommitSha}
 	if includeRawBlock {
-		query += ", raw_block) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+		query += ", raw_block) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
 		values = append(values, submission.RawBlock)
 	} else {
-		query += ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+		query += ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
 	}
 	return kc.Session.Query(query, values...).Exec()
 }
