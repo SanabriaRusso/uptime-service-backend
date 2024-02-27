@@ -12,7 +12,7 @@ import (
 func checkForSubmissions(session *gocql.Session, keyspace, date string) (bool, error) {
 	var submitter, blockHash, rawBlock string
 
-	query := fmt.Sprintf("SELECT submitter, block_hash, raw_block FROM %s.submissions WHERE submitted_at_date='%s' LIMIT 1", keyspace, date)
+	query := fmt.Sprintf("SELECT submitter, block_hash, raw_block FROM %s.submissions WHERE submitted_at_date='%s' LIMIT 1 ALLOW FILTERING", keyspace, date)
 
 	if err := session.Query(query).Scan(&submitter, &blockHash, &rawBlock); err != nil {
 		if err == gocql.ErrNotFound {
