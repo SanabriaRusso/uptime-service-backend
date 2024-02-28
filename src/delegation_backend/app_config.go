@@ -3,6 +3,7 @@ package delegation_backend
 import (
 	"encoding/json"
 	"os"
+	"strconv"
 
 	logging "github.com/ipfs/go-log/v2"
 )
@@ -71,12 +72,23 @@ func LoadEnv(log logging.EventLogger) AppConfig {
 			}
 		}
 
-		// AWSKeyspace configurations
-		if awsKeyspace := os.Getenv("AWS_KEYSPACE"); awsKeyspace != "" {
-
-			awsRegion := getEnvChecked("AWS_REGION", log)
+		// AWSKeyspace/Cassandra configurations
+		if keyspace := os.Getenv("AWS_KEYSPACE"); keyspace != "" {
 			awsKeyspace := getEnvChecked("AWS_KEYSPACE", log)
 			sslCertificatePath := getEnvChecked("AWS_SSL_CERTIFICATE_PATH", log)
+
+			//service level connection
+			cassandraHost := os.Getenv("CASSANDRA_HOST")
+			cassandraPortStr := os.Getenv("CASSANDRA_PORT")
+			cassandraPort, err := strconv.Atoi(cassandraPortStr)
+			if err != nil {
+				cassandraPort = 9142
+			}
+			cassandraUsername := os.Getenv("CASSANDRA_USERNAME")
+			cassandraPassword := os.Getenv("CASSANDRA_PASSWORD")
+
+			//aws keyspaces connection
+			awsRegion := os.Getenv("AWS_REGION")
 
 			// if webIdentityTokenFile, roleSessionName and roleArn are set,
 			// we are using AWS STS to assume a role and get temporary credentials
@@ -90,6 +102,10 @@ func LoadEnv(log logging.EventLogger) AppConfig {
 
 			config.AwsKeyspaces = &AwsKeyspacesConfig{
 				Keyspace:             awsKeyspace,
+				CassandraHost:        cassandraHost,
+				CassandraPort:        cassandraPort,
+				CassandraUsername:    cassandraUsername,
+				CassandraPassword:    cassandraPassword,
 				Region:               awsRegion,
 				AccessKeyId:          accessKeyId,
 				SecretAccessKey:      secretAccessKey,
@@ -150,7 +166,11 @@ type AwsConfig struct {
 
 type AwsKeyspacesConfig struct {
 	Keyspace             string `json:"keyspace"`
-	Region               string `json:"region"`
+	CassandraHost        string `json:"cassandra_host"`
+	CassandraPort        int    `json:"cassandra_port"`
+	CassandraUsername    string `json:"cassandra_username,omitempty"`
+	CassandraPassword    string `json:"cassandra_password,omitempty"`
+	Region               string `json:"region,omitempty"`
 	AccessKeyId          string `json:"access_key_id,omitempty"`
 	SecretAccessKey      string `json:"secret_access_key,omitempty"`
 	WebIdentityTokenFile string `json:"web_identity_token_file,omitempty"`
