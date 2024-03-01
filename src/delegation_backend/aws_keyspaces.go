@@ -200,9 +200,12 @@ func (kc *KeyspaceContext) insertSubmission(submission *Submission) error {
 	}, maxRetries, initialBackoff)
 }
 
+// calculateShard returns the shard number for a given submission time.
+// 0-599 are the possible shard numbers, each representing a 6-second interval.
 func calculateShard(submittedAt time.Time) int {
-	// return minute of the hour
-	return submittedAt.Minute()
+	minute := submittedAt.Minute()
+	second := submittedAt.Second()
+	return minute*10 + second/6
 }
 
 func (kc *KeyspaceContext) tryInsertSubmission(submission *Submission, includeRawBlock bool) error {
