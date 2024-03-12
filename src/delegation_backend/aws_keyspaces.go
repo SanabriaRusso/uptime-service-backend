@@ -66,6 +66,7 @@ func InitializeKeyspaceSession(config *AwsKeyspacesConfig) (*gocql.Session, erro
 
 	cluster.Consistency = gocql.LocalQuorum
 	cluster.DisableInitialHostLookup = false
+	cluster.RetryPolicy = &gocql.ExponentialBackoffRetryPolicy{NumRetries: 10, Min: 100 * time.Millisecond, Max: 10 * time.Second}
 
 	session, err := cluster.CreateSession()
 	if err != nil {
