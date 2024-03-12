@@ -114,15 +114,27 @@ If the `CONFIG_FILE` environment variable is not set, the program will fall back
    - `AWS_ACCESS_KEY_ID` - Your AWS Access Key ID.
    - `AWS_SECRET_ACCESS_KEY` - Your AWS Secret Access Key.
 
-4. **AWS Keyspaces Configuration**:
-   - `AWS_KEYSPACE` - Your AWS Keyspace name.
+4. **AWS Keyspaces/Cassandra Configuration**:
+
+   **Mandatory/common env vars:**
+   - `AWS_KEYSPACE` - Your Keyspace name.
+   - `AWS_SSL_CERTIFICATE_PATH` - The path to your SSL certificate.
+
+   **Depending on way of connecting:**
+   
+   _Service level connection:_
+   - `CASSANDRA_HOST` - Cassandra host (e.g. cassandra.us-west-2.amazonaws.com).
+   - `CASSANDRA_PORT` - Cassandra port (e.g. 9142).
+   - `CASSANDRA_USERNAME` - Cassandra service user.
+   - `CASSANDRA_PASSWORD` - Cassandra service password.
+   
+   _AWS access key / web identity token:_
    - `AWS_REGION` - The AWS region (same as used for S3).
    - `AWS_WEB_IDENTITY_TOKEN_FILE` - AWS web identity token file.
    - `AWS_ROLE_SESSION_NAME` - AWS role session name.
    - `AWS_ROLE_ARN` - AWS role arn.
    - `AWS_ACCESS_KEY_ID` - Your AWS Access Key ID. No need to set if `AWS_WEB_IDENTITY_TOKEN_FILE`, `AWS_ROLE_SESSION_NAME` and `AWS_ROLE_ARN` are set.
    - `AWS_SECRET_ACCESS_KEY` - Your AWS Secret Access Key. No need to set if `AWS_WEB_IDENTITY_TOKEN_FILE`, `AWS_ROLE_SESSION_NAME` and `AWS_ROLE_ARN` are set.
-   - `AWS_SSL_CERTIFICATE_PATH` - The path to your SSL certificate for AWS Keyspaces.
 
 > **Note:** Docker image already includes cert and has `AWS_SSL_CERTIFICATE_PATH` set up, however it can be overriden by providing this env variable to docker.
 

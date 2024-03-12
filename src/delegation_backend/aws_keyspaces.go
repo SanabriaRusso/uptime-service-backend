@@ -23,19 +23,71 @@ import (
 
 // InitializeKeyspaceSession creates a new gocql session for Amazon Keyspaces using the provided configuration.
 func InitializeKeyspaceSession(config *AwsKeyspacesConfig) (*gocql.Session, error) {
-	auth := sigv4.NewAwsAuthenticator()
+	var cluster *gocql.ClusterConfig
 
+	var endpoint string
+	if config.CassandraHost == "" {
+		if config.Region == "" {
+			return nil, fmt.Errorf("AWS_REGION is required when CASSANDRA_HOST is not set")
+		}
+		endpoint = "cassandra." + config.Region + ".amazonaws.com"
+	} else {
+		endpoint = config.CassandraHost
+	}
+
+	cluster = gocql.NewCluster(endpoint)
+	cluster.Keyspace = config.Keyspace
+
+	var port int
+	if config.CassandraPort != 0 {
+		port = config.CassandraPort
+	} else {
+		port = 9142
+	}
+	cluster.Port = port
+
+	if config.CassandraUsername != "" && config.CassandraPassword != "" {
+		cluster.Authenticator = gocql.PasswordAuthenticator{
+			Username: config.CassandraUsername,
+			Password: config.CassandraPassword}
+	} else {
+		var err error
+		cluster.Authenticator, err = sigv4Authentication(config)
+		if err != nil {
+			return nil, fmt.Errorf("could not create SigV4 authenticator: %w", err)
+		}
+	}
+
+	cluster.SslOpts = &gocql.SslOptions{
+		CaPath: config.SSLCertificatePath,
+
+		EnableHostVerification: false,
+	}
+
+	cluster.Consistency = gocql.LocalQuorum
+	cluster.DisableInitialHostLookup = false
+
+	session, err := cluster.CreateSession()
+	if err != nil {
+		return nil, fmt.Errorf("could not create Cassandra session: %w", err)
+	}
+
+	return session, nil
+}
+
+func sigv4Authentication(config *AwsKeyspacesConfig) (sigv4.AwsAuthenticator, error) {
+	auth := sigv4.NewAwsAuthenticator()
 	if config.RoleSessionName != "" && config.RoleArn != "" && config.WebIdentityTokenFile != "" {
 		// If role-related env variables are set, use temporary credentials
 		tokenBytes, err := os.ReadFile(config.WebIdentityTokenFile)
 		if err != nil {
-			return nil, fmt.Errorf("error reading web identity token file: %w", err)
+			return auth, fmt.Errorf("error reading web identity token file: %w", err)
 		}
 		webIdentityToken := string(tokenBytes)
 
 		awsSession, err := session.NewSession(&aws.Config{Region: aws.String(config.Region)})
 		if err != nil {
-			return nil, fmt.Errorf("error creating AWS session: %w", err)
+			return auth, fmt.Errorf("error creating AWS session: %w", err)
 		}
 
 		stsSvc := sts.New(awsSession)
@@ -45,7 +97,7 @@ func InitializeKeyspaceSession(config *AwsKeyspacesConfig) (*gocql.Session, erro
 			WebIdentityToken: &webIdentityToken,
 		})
 		if err != nil {
-			return nil, fmt.Errorf("unable to assume role: %w", err)
+			return auth, fmt.Errorf("unable to assume role: %w", err)
 		}
 
 		auth.AccessKeyId = *creds.Credentials.AccessKeyId
@@ -58,28 +110,7 @@ func InitializeKeyspaceSession(config *AwsKeyspacesConfig) (*gocql.Session, erro
 		auth.SecretAccessKey = config.SecretAccessKey
 		auth.Region = config.Region
 	}
-
-	// Create a SigV4 gocql cluster config
-	endpoint := "cassandra." + config.Region + ".amazonaws.com"
-	cluster := gocql.NewCluster(endpoint)
-	cluster.Keyspace = config.Keyspace
-	cluster.Port = 9142
-	cluster.Authenticator = auth
-	cluster.SslOpts = &gocql.SslOptions{
-		CaPath:                 config.SSLCertificatePath,
-		EnableHostVerification: false,
-	}
-
-	cluster.Consistency = gocql.LocalQuorum
-	cluster.DisableInitialHostLookup = false
-
-	// Create a SigV4 gocql session
-	session, err := cluster.CreateSession()
-	if err != nil {
-		return nil, fmt.Errorf("could not create Cassandra session: %w", err)
-	}
-
-	return session, nil
+	return auth, nil
 }
 
 type Submission struct {
