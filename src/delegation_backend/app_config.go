@@ -37,6 +37,7 @@ func LoadEnv(log logging.EventLogger) AppConfig {
 		}
 	} else {
 		networkName := getEnvChecked("CONFIG_NETWORK_NAME", log)
+		verifySignatureDisabled := boolEnvChecked("VERIFY_SIGNATURE_DISABLED", log)
 
 		delegationWhitelistDisabled := boolEnvChecked("DELEGATION_WHITELIST_DISABLED", log)
 		var gsheetId, delegationWhitelistList, delegationWhitelistColumn string
@@ -128,6 +129,7 @@ func LoadEnv(log logging.EventLogger) AppConfig {
 		config.DelegationWhitelistList = delegationWhitelistList
 		config.DelegationWhitelistColumn = delegationWhitelistColumn
 		config.DelegationWhitelistDisabled = delegationWhitelistDisabled
+		config.VerifySignatureDisabled = verifySignatureDisabled
 	}
 
 	return config
@@ -189,6 +191,7 @@ type AppConfig struct {
 	DelegationWhitelistList     string                 `json:"delegation_whitelist_list"`
 	DelegationWhitelistColumn   string                 `json:"delegation_whitelist_column"`
 	DelegationWhitelistDisabled bool                   `json:"delegation_whitelist_disabled,omitempty"`
+	VerifySignatureDisabled     bool                   `json:"verify_signature_disabled,omitempty"`
 	Aws                         *AwsConfig             `json:"aws,omitempty"`
 	AwsKeyspaces                *AwsKeyspacesConfig    `json:"aws_keyspaces,omitempty"`
 	LocalFileSystem             *LocalFileSystemConfig `json:"filesystem,omitempty"`

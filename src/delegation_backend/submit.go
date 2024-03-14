@@ -98,12 +98,13 @@ type AwsContext struct {
 }
 
 type App struct {
-	Log               *logging.ZapEventLogger
-	SubmitCounter     *AttemptCounter
-	Whitelist         *WhitelistMVar
-	WhitelistDisabled bool
-	Save              func(ObjectsToSave)
-	Now               nowFunc
+	Log                     *logging.ZapEventLogger
+	SubmitCounter           *AttemptCounter
+	Whitelist               *WhitelistMVar
+	WhitelistDisabled       bool
+	VerifySignatureDisabled bool
+	Save                    func(ObjectsToSave)
+	Now                     nowFunc
 }
 
 type SubmitH struct {
@@ -178,19 +179,21 @@ func (h *SubmitH) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	payload, err := req.Data.MakeSignPayload()
-	if err != nil {
-		h.app.Log.Errorf("Error while making sign payload: %v", err)
-		w.WriteHeader(500)
-		writeErrorResponse(h.app, &w, "Unexpected server error")
-		return
-	}
+	if !h.app.VerifySignatureDisabled {
+		payload, err := req.Data.MakeSignPayload()
+		if err != nil {
+			h.app.Log.Errorf("Error while making sign payload: %v", err)
+			w.WriteHeader(500)
+			writeErrorResponse(h.app, &w, "Unexpected server error")
+			return
+		}
 
-	hash := blake2b.Sum256(payload)
-	if !verifySig(&req.Submitter, &req.Sig, hash[:], NetworkId()) {
-		w.WriteHeader(401)
-		writeErrorResponse(h.app, &w, "Invalid signature")
-		return
+		hash := blake2b.Sum256(payload)
+		if !verifySig(&req.Submitter, &req.Sig, hash[:], NetworkId()) {
+			w.WriteHeader(401)
+			writeErrorResponse(h.app, &w, "Invalid signature")
+			return
+		}
 	}
 
 	passesAttemptLimit := h.app.SubmitCounter.RecordAttempt(req.Submitter)
