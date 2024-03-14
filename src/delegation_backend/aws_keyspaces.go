@@ -66,6 +66,7 @@ func InitializeKeyspaceSession(config *AwsKeyspacesConfig) (*gocql.Session, erro
 
 	cluster.Consistency = gocql.LocalQuorum
 	cluster.DisableInitialHostLookup = false
+	cluster.RetryPolicy = &gocql.ExponentialBackoffRetryPolicy{NumRetries: 10, Min: 100 * time.Millisecond, Max: 10 * time.Second}
 
 	session, err := cluster.CreateSession()
 	if err != nil {
@@ -200,14 +201,24 @@ func (kc *KeyspaceContext) insertSubmission(submission *Submission) error {
 	}, maxRetries, initialBackoff)
 }
 
+// calculateShard returns the shard number for a given submission time.
+// 0-599 are the possible shard numbers, each representing a 144-second interval within 24h.
+// shard = (3600 * hour + 60 * minute + second) // 144
+func calculateShard(submittedAt time.Time) int {
+	hour := submittedAt.Hour()
+	minute := submittedAt.Minute()
+	second := submittedAt.Second()
+	return (3600*hour + 60*minute + second) / 144
+}
+
 func (kc *KeyspaceContext) tryInsertSubmission(submission *Submission, includeRawBlock bool) error {
-	query := "INSERT INTO " + kc.Keyspace + ".submissions (submitted_at_date, submitted_at, submitter, remote_addr, peer_id, snark_work, block_hash, created_at, graphql_control_port, built_with_commit_sha"
-	values := []interface{}{submission.SubmittedAtDate, submission.SubmittedAt, submission.Submitter, submission.RemoteAddr, submission.PeerId, submission.SnarkWork, submission.BlockHash, submission.CreatedAt, submission.GraphqlControlPort, submission.BuiltWithCommitSha}
+	query := "INSERT INTO " + kc.Keyspace + ".submissions (submitted_at_date, shard, submitted_at, submitter, remote_addr, peer_id, snark_work, block_hash, created_at, graphql_control_port, built_with_commit_sha"
+	values := []interface{}{submission.SubmittedAtDate, calculateShard(submission.SubmittedAt), submission.SubmittedAt, submission.Submitter, submission.RemoteAddr, submission.PeerId, submission.SnarkWork, submission.BlockHash, submission.CreatedAt, submission.GraphqlControlPort, submission.BuiltWithCommitSha}
 	if includeRawBlock {
-		query += ", raw_block) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+		query += ", raw_block) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
 		values = append(values, submission.RawBlock)
 	} else {
-		query += ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+		query += ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
 	}
 	return kc.Session.Query(query, values...).Exec()
 }
