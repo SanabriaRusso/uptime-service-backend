@@ -33,6 +33,10 @@ func main() {
 	app.Log = log
 	awsctx := AwsContext{}
 	kc := KeyspaceContext{}
+	app.VerifySignatureDisabled = appCfg.VerifySignatureDisabled
+	if app.VerifySignatureDisabled {
+		log.Warnf("Signature verification is disabled, it is not recommended to run the delegation backend in this mode!")
+	}
 
 	// Storage backend setup
 	if appCfg.Aws != nil {

@@ -141,6 +141,13 @@ If the `CONFIG_FILE` environment variable is not set, the program will fall back
 5. **Local File System Configuration**:
    - `CONFIG_FILESYSTEM_PATH` - Set this to the path where you want the local file system to point.
 
+6. **Test settings**
+
+These settings are useful for debugging or testing under controlled conditions. Always revert to secure and sensible defaults before moving to a production environment to maintain the security and reliability of your system.
+
+ - `VERIFY_SIGNATURE_DISABLED` - set to `1` to disable signature verification on submission. It is `0` by default.
+ - `REQUESTS_PER_PK_HOURLY` - set to arbitrarily high value if you want more requests accepted from a single submitter per hour. Default is `120`. 
+
 ### Important Notes
 
 - At least one of the following storage options is required: `AwsS3`, `AwsKeyspaces`, or `LocalFileSystem`. Multi-storage configuration is also supported, allowing for a combination of these storage options.
