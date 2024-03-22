@@ -207,7 +207,7 @@ func calculateBlockSize(rawBlock []byte) int {
 func (kc *KeyspaceContext) insertSubmission(submission *Submission) error {
 	return ExponentialBackoff(func() error {
 		if submission.RawBlock != nil && calculateBlockSize(submission.RawBlock) > MAX_BLOCK_SIZE {
-			kc.Log.Warnf("KeyspaceSave: Block too large (%d bytes), inserting without raw_block", calculateBlockSize(submission.RawBlock))
+			kc.Log.Infof("KeyspaceSave: Block too large (%d bytes), inserting without raw_block", calculateBlockSize(submission.RawBlock))
 			if err := kc.insertSubmissionWithoutRawBlock(submission); err != nil {
 				return err
 			}
@@ -266,7 +266,7 @@ func (kc *KeyspaceContext) KeyspaceSave(objs ObjectsToSave) {
 		if strings.HasPrefix(path, "submissions/") {
 			submission, err := kc.parseSubmissionBytes(bs, path)
 			if err != nil {
-				kc.Log.Warnf("KeyspaceSave: Error parsing submission JSON: %v", err)
+				kc.Log.Errorf("KeyspaceSave: Error parsing submission JSON: %v", err)
 				continue
 			}
 			submissionToSave.BlockHash = submission.BlockHash
@@ -283,17 +283,17 @@ func (kc *KeyspaceContext) KeyspaceSave(objs ObjectsToSave) {
 		} else if strings.HasPrefix(path, "blocks/") {
 			block, err := kc.parseBlockBytes(bs, path)
 			if err != nil {
-				kc.Log.Warnf("KeyspaceSave: Error parsing block file: %v", err)
+				kc.Log.Errorf("KeyspaceSave: Error parsing block file: %v", err)
 				continue
 			}
 			submissionToSave.RawBlock = block.RawBlock
 			submissionToSave.BlockHash = block.BlockHash
 		} else {
-			kc.Log.Warnf("KeyspaceSave: Unknown path format: %s", path)
+			kc.Log.Errorf("KeyspaceSave: Unknown path format: %s", path)
 		}
 
 	}
-	kc.Log.Debugf("KeyspaceSave: Saving submission for block: %v, submitter: %v, submitted_at: %v", submissionToSave.BlockHash, submissionToSave.Submitter, submissionToSave.SubmittedAt)
+	kc.Log.Infof("KeyspaceSave: Saving submission for block: %v, submitter: %v, submitted_at: %v", submissionToSave.BlockHash, submissionToSave.Submitter, submissionToSave.SubmittedAt)
 	if err := kc.insertSubmission(submissionToSave); err != nil {
 		kc.Log.Errorf("KeyspaceSave: Error saving submission to Keyspaces: %v", err)
 	}
