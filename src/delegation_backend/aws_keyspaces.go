@@ -206,27 +206,55 @@ func calculateBlockSize(rawBlock []byte) int {
 // Insert a submission into the Keyspaces database
 func (kc *KeyspaceContext) insertSubmission(submission *Submission) error {
 	return ExponentialBackoff(func() error {
-		includeRawBlock := true
 		if submission.RawBlock != nil && calculateBlockSize(submission.RawBlock) > MAX_BLOCK_SIZE {
 			kc.Log.Warnf("KeyspaceSave: Block too large (%d bytes), inserting without raw_block", calculateBlockSize(submission.RawBlock))
-			includeRawBlock = false
+			if err := kc.insertSubmissionWithoutRawBlock(submission); err != nil {
+				return err
+			}
+		} else {
+			if err := kc.insertSubmissionWithRawBlock(submission); err != nil {
+				return err
+			}
+
 		}
 
-		if err := kc.tryInsertSubmission(submission, includeRawBlock); err != nil {
-			return err
-		}
 		return nil
 	}, maxRetries, initialBackoff)
 }
 
-func (kc *KeyspaceContext) tryInsertSubmission(submission *Submission, includeRawBlock bool) error {
-	query := "INSERT INTO " + kc.Keyspace + ".submissions (submitted_at_date, shard, submitted_at, submitter, remote_addr, peer_id, snark_work, block_hash, created_at, graphql_control_port, built_with_commit_sha"
-	values := []interface{}{submission.SubmittedAtDate, calculateShard(submission.SubmittedAt), submission.SubmittedAt, submission.Submitter, submission.RemoteAddr, submission.PeerId, submission.SnarkWork, submission.BlockHash, submission.CreatedAt, submission.GraphqlControlPort, submission.BuiltWithCommitSha}
-	if includeRawBlock {
-		query += ", raw_block) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
-		values = append(values, submission.RawBlock)
-	} else {
-		query += ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+func (kc *KeyspaceContext) insertSubmissionWithoutRawBlock(submission *Submission) error {
+	query := "INSERT INTO " + kc.Keyspace + ".submissions (submitted_at_date, shard, submitted_at, submitter, remote_addr, peer_id, snark_work, block_hash, created_at, graphql_control_port, built_with_commit_sha) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+	values := []interface{}{
+		submission.SubmittedAtDate,
+		calculateShard(submission.SubmittedAt),
+		submission.SubmittedAt,
+		submission.Submitter,
+		submission.RemoteAddr,
+		submission.PeerId,
+		submission.SnarkWork,
+		submission.BlockHash,
+		submission.CreatedAt,
+		submission.GraphqlControlPort,
+		submission.BuiltWithCommitSha,
+	}
+	return kc.Session.Query(query, values...).Exec()
+}
+
+func (kc *KeyspaceContext) insertSubmissionWithRawBlock(submission *Submission) error {
+	query := "INSERT INTO " + kc.Keyspace + ".submissions (submitted_at_date, shard, submitted_at, submitter, remote_addr, peer_id, snark_work, block_hash, created_at, graphql_control_port, built_with_commit_sha, raw_block) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+	values := []interface{}{
+		submission.SubmittedAtDate,
+		calculateShard(submission.SubmittedAt),
+		submission.SubmittedAt,
+		submission.Submitter,
+		submission.RemoteAddr,
+		submission.PeerId,
+		submission.SnarkWork,
+		submission.BlockHash,
+		submission.CreatedAt,
+		submission.GraphqlControlPort,
+		submission.BuiltWithCommitSha,
+		submission.RawBlock,
 	}
 	return kc.Session.Query(query, values...).Exec()
 }
