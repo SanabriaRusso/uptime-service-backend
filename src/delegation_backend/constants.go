@@ -16,6 +16,7 @@ const WHITELIST_REFRESH_INTERVAL = 10 * 60 * 1000000000    // 10m
 var PK_PREFIX = [...]byte{1, 1}
 var SIG_PREFIX = [...]byte{1}
 var BLOCK_HASH_PREFIX = [...]byte{1}
+var MAX_BLOCK_SIZE = 1000000 // (1MB) max block size in bytes for Cassandra, blocks larger than this size will be stored in S3 only
 
 func NetworkId() uint8 {
 	if os.Getenv("NETWORK") == "mainnet" {

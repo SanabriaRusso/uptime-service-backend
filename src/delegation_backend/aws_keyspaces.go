@@ -187,20 +187,6 @@ type KeyspaceContext struct {
 	Log      *logging.ZapEventLogger
 }
 
-// Insert a submission into the Keyspaces database
-func (kc *KeyspaceContext) insertSubmission(submission *Submission) error {
-	return ExponentialBackoff(func() error {
-		if err := kc.tryInsertSubmission(submission, true); err != nil {
-			if isRowSizeError(err) {
-				kc.Log.Warnf("KeyspaceSave: Block too large, inserting without raw_block")
-				return kc.tryInsertSubmission(submission, false)
-			}
-			return err
-		}
-		return nil
-	}, maxRetries, initialBackoff)
-}
-
 // calculateShard returns the shard number for a given submission time.
 // 0-599 are the possible shard numbers, each representing a 144-second interval within 24h.
 // shard = (3600 * hour + 60 * minute + second) // 144
@@ -209,6 +195,28 @@ func calculateShard(submittedAt time.Time) int {
 	minute := submittedAt.Minute()
 	second := submittedAt.Second()
 	return (3600*hour + 60*minute + second) / 144
+}
+
+// Estimate the size of the raw block in bytes.
+// In Go, len() returns the number of bytes in a slice, which should suffice for a rough estimation.
+func calculateBlockSize(rawBlock []byte) int {
+	return len(rawBlock)
+}
+
+// Insert a submission into the Keyspaces database
+func (kc *KeyspaceContext) insertSubmission(submission *Submission) error {
+	return ExponentialBackoff(func() error {
+		includeRawBlock := true
+		if submission.RawBlock != nil && calculateBlockSize(submission.RawBlock) > MAX_BLOCK_SIZE {
+			kc.Log.Warnf("KeyspaceSave: Block too large (%d bytes), inserting without raw_block", calculateBlockSize(submission.RawBlock))
+			includeRawBlock = false
+		}
+
+		if err := kc.tryInsertSubmission(submission, includeRawBlock); err != nil {
+			return err
+		}
+		return nil
+	}, maxRetries, initialBackoff)
 }
 
 func (kc *KeyspaceContext) tryInsertSubmission(submission *Submission, includeRawBlock bool) error {
@@ -221,11 +229,6 @@ func (kc *KeyspaceContext) tryInsertSubmission(submission *Submission, includeRa
 		query += ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
 	}
 	return kc.Session.Query(query, values...).Exec()
-}
-
-func isRowSizeError(err error) bool {
-	// Replace with more robust error checking if possible
-	return strings.Contains(err.Error(), "The update would cause the row to exceed the maximum allowed size")
 }
 
 // KeyspaceSave saves the provided objects into Amazon Keyspaces.
