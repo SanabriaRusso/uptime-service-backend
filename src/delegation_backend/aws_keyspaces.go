@@ -295,7 +295,7 @@ func (kc *KeyspaceContext) KeyspaceSave(objs ObjectsToSave) {
 	}
 	kc.Log.Debugf("KeyspaceSave: Saving submission for block: %v, submitter: %v, submitted_at: %v", submissionToSave.BlockHash, submissionToSave.Submitter, submissionToSave.SubmittedAt)
 	if err := kc.insertSubmission(submissionToSave); err != nil {
-		kc.Log.Warnf("KeyspaceSave: Error saving submission to Keyspaces: %v", err)
+		kc.Log.Errorf("KeyspaceSave: Error saving submission to Keyspaces: %v", err)
 	}
 }
 
