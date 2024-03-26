@@ -206,7 +206,12 @@ func calculateBlockSize(rawBlock []byte) int {
 // Insert a submission into the Keyspaces database
 func (kc *KeyspaceContext) insertSubmission(submission *Submission) error {
 	return ExponentialBackoff(func() error {
-		if submission.RawBlock != nil && calculateBlockSize(submission.RawBlock) > MAX_BLOCK_SIZE {
+		if submission.RawBlock == nil {
+			kc.Log.Error("KeyspaceSave: Block is missing in the submission, which is not expected, but inserting without raw_block")
+			if err := kc.insertSubmissionWithoutRawBlock(submission); err != nil {
+				return err
+			}
+		} else if calculateBlockSize(submission.RawBlock) > MAX_BLOCK_SIZE {
 			kc.Log.Infof("KeyspaceSave: Block too large (%d bytes), inserting without raw_block", calculateBlockSize(submission.RawBlock))
 			if err := kc.insertSubmissionWithoutRawBlock(submission); err != nil {
 				return err
