@@ -1,4 +1,4 @@
-with import <nixpkgs> { };
+with import (fetchTarball "https://nixos.org/channels/nixos-unstable/nixexprs.tar.xz") { };
 let
   minaSigner = import ./external/c-reference-signer;
 in
