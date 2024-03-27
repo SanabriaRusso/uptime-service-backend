@@ -1,11 +1,11 @@
-with import <nixpkgs> { };
+with import (fetchTarball "https://nixos.org/channels/nixos-unstable/nixexprs.tar.xz") { };
 let
   minaSigner = import ./external/c-reference-signer;
 in
 {
   devEnv = stdenv.mkDerivation {
     name = "dev";
-    buildInputs = [ stdenv go_1_20 glibc minaSigner ];
+    buildInputs = [ stdenv go_1_21 glibc minaSigner ];
     shellHook = ''
       export LIB_MINA_SIGNER=${minaSigner}/lib/libmina_signer.so
       return

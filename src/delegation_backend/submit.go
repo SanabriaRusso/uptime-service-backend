@@ -51,7 +51,7 @@ func (ctx *AwsContext) S3Save(objs ObjectsToSave) {
 			}
 		}
 
-		ctx.Log.Debugf("S3Save: saving %s", path)
+		ctx.Log.Infof("S3Save: saving %s", path)
 		_, err := ctx.Client.PutObject(ctx.Context, &s3.PutObjectInput{
 			Bucket:     ctx.BucketName,
 			Key:        fullKey,
@@ -76,10 +76,10 @@ func LocalFileSystemSave(objs ObjectsToSave, directory string, log logging.Stand
 
 		err := os.MkdirAll(filepath.Dir(fullPath), os.ModePerm)
 		if err != nil {
-			log.Warnf("LocalFileSystemSave: Error creating directories for %s: %v", fullPath, err)
+			log.Errorf("LocalFileSystemSave: Error creating directories for %s: %v", fullPath, err)
 			continue // skip to the next object
 		}
-		log.Debugf("LocalFileSystemSave: saving %s", fullPath)
+		log.Infof("LocalFileSystemSave: saving %s", fullPath)
 		err = os.WriteFile(fullPath, bs, 0644)
 		if err != nil {
 			log.Warnf("Error writing to file %s: %v", fullPath, err)
