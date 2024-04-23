@@ -2,12 +2,9 @@ package delegation_backend
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"log"
 	"os"
-	"path/filepath"
-	"strings"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -114,72 +111,6 @@ func sigv4Authentication(config *AwsKeyspacesConfig) (sigv4.AwsAuthenticator, er
 	return auth, nil
 }
 
-type Submission struct {
-	BlockHash          string    `json:"block_hash"`
-	SubmittedAtDate    string    // Extracted from filePath
-	SubmittedAt        time.Time // Extracted from filePath and parsed
-	CreatedAt          time.Time `json:"created_at"`
-	RemoteAddr         string    `json:"remote_addr"`
-	PeerId             string    `json:"peer_id"`
-	Submitter          string    `json:"submitter"` // is base58check-encoded submitter's public key
-	RawBlock           []byte    `json:"raw_block,omitempty"`
-	SnarkWork          []byte    `json:"snark_work,omitempty"`
-	GraphqlControlPort int       `json:"graphql_control_port,omitempty"`
-	BuiltWithCommitSha string    `json:"built_with_commit_sha,omitempty"`
-}
-
-type Block struct {
-	BlockHash string
-	RawBlock  []byte
-}
-
-func (kc *KeyspaceContext) parseSubmissionBytes(data []byte, filePath string) (*Submission, error) {
-	// Extract information from filePath
-	// kc.Log.Debugf("filePath: %s\n", filePath)
-	filePathParts := strings.Split(filePath, "/")
-	if len(filePathParts) < 3 {
-		return nil, fmt.Errorf("invalid file path: %s", filePath)
-	}
-	submittedAtDate := filePathParts[1]
-	submittedAtWithSubmitter := strings.TrimSuffix(filePathParts[2], ".json")
-	lastHyphenIndex := strings.LastIndex(submittedAtWithSubmitter, "-")
-	submittedAtStr := submittedAtWithSubmitter[:lastHyphenIndex]
-
-	// Parse submittedAtStr string into time.Time
-	submittedAt, err := time.Parse("2006-01-02T15:04:05Z", submittedAtStr)
-	if err != nil {
-		return nil, fmt.Errorf("error parsing submitted_at string: %w", err)
-	}
-
-	// Parse JSON contents
-	var submission Submission
-	err = json.Unmarshal(data, &submission)
-	if err != nil {
-		return nil, fmt.Errorf("error unmarshaling submission JSON: %w", err)
-	}
-
-	// Populate additional fields from filePath
-	submission.SubmittedAtDate = submittedAtDate
-	submission.SubmittedAt = submittedAt
-	// kc.Log.Debugf("submission: %v\n", submission)
-
-	return &submission, nil
-}
-
-func (kc *KeyspaceContext) parseBlockBytes(data []byte, filePath string) (*Block, error) {
-	// Extract the filename without the extension to use as the BlockHash
-	// kc.Log.Debugf("filePath: %s\n", filePath)
-	filename := filepath.Base(filePath)
-	blockHash := strings.TrimSuffix(filename, filepath.Ext(filename))
-
-	block := &Block{
-		BlockHash: blockHash,
-		RawBlock:  data,
-	}
-	// kc.Log.Debugf("block: %v\n", block)
-	return block, nil
-}
-
 type KeyspaceContext struct {
 	Session  *gocql.Session
 	Keyspace string
@@ -266,37 +197,10 @@ func (kc *KeyspaceContext) insertSubmissionWithRawBlock(submission *Submission) 
 
 // KeyspaceSave saves the provided objects into Amazon Keyspaces.
 func (kc *KeyspaceContext) KeyspaceSave(objs ObjectsToSave) {
-	var submissionToSave *Submission = &Submission{}
-	for path, bs := range objs {
-		if strings.HasPrefix(path, "submissions/") {
-			submission, err := kc.parseSubmissionBytes(bs, path)
-			if err != nil {
-				kc.Log.Errorf("KeyspaceSave: Error parsing submission JSON: %v", err)
-				continue
-			}
-			submissionToSave.BlockHash = submission.BlockHash
-			submissionToSave.CreatedAt = submission.CreatedAt
-			submissionToSave.GraphqlControlPort = submission.GraphqlControlPort
-			submissionToSave.PeerId = submission.PeerId
-			submissionToSave.RemoteAddr = submission.RemoteAddr
-			submissionToSave.SnarkWork = submission.SnarkWork
-			submissionToSave.SubmittedAt = submission.SubmittedAt
-			submissionToSave.SubmittedAtDate = submission.SubmittedAtDate
-			submissionToSave.Submitter = submission.Submitter
-			submissionToSave.BuiltWithCommitSha = submission.BuiltWithCommitSha
-
-		} else if strings.HasPrefix(path, "blocks/") {
-			block, err := kc.parseBlockBytes(bs, path)
-			if err != nil {
-				kc.Log.Errorf("KeyspaceSave: Error parsing block file: %v", err)
-				continue
-			}
-			submissionToSave.RawBlock = block.RawBlock
-			submissionToSave.BlockHash = block.BlockHash
-		} else {
-			kc.Log.Errorf("KeyspaceSave: Unknown path format: %s", path)
-		}
-
+	submissionToSave, err := objectToSaveToSubmission(objs, kc.Log)
+	if err != nil {
+		kc.Log.Errorf("KeyspaceSave: Error preparing submission for saving: %v", err)
+		return
 	}
 	kc.Log.Infof("KeyspaceSave: Saving submission for block: %v, submitter: %v, submitted_at: %v", submissionToSave.BlockHash, submissionToSave.Submitter, submissionToSave.SubmittedAt)
 	if err := kc.insertSubmission(submissionToSave); err != nil {
