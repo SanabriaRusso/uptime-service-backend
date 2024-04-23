@@ -89,6 +89,14 @@ The program can be configured using either a JSON configuration file or environm
   },
   "filesystem": {
     "path": "your_filesystem_path"
+  },
+  "postgresql": {
+    "user": "postgres",
+    "password": "postgres",
+    "host": "localhost",
+    "port": 5432,
+    "database": "coordinator",
+    "sslmode": "require"
   }
 }
 ```
@@ -141,7 +149,18 @@ If the `CONFIG_FILE` environment variable is not set, the program will fall back
 5. **Local File System Configuration**:
    - `CONFIG_FILESYSTEM_PATH` - Set this to the path where you want the local file system to point.
 
-6. **Test settings**
+6. **PostgreSQL Configuration**
+
+If this storage backend is configured it is assumed that submissions are written into `submissions` table in the uptime-service-validation (coordinator) component. In this mode we are not storing `raw_block` in the database.
+
+- `POSTGRES_HOST` - Hostname or IP address where your PostgreSQL server is running.
+- `POSTGRES_PORT` - Port number on which PostgreSQL is listening.
+- `POSTGRES_DB` - The name of the database to connect to. This is the uptime-service-validation database.
+- `POSTGRES_USER` - The username with which to connect to the database.
+- `POSTGRES_PASSWORD` - The password for the database user.
+- `POSTGRES_SSLMODE` - The mode for SSL connectivity (e.g., `disable`, `require`, `verify-ca`, `verify-full`). Default is `require` for secure setups.
+
+7. **Test settings**
 
 These settings are useful for debugging or testing under controlled conditions. Always revert to secure and sensible defaults before moving to a production environment to maintain the security and reliability of your system.
 
