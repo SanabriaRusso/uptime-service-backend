@@ -47,6 +47,13 @@ func TestIntegration_BP_Uptime_Storage(t *testing.T) {
 	// create network
 	miniminaNetworkCreate(networkName)
 
+	// postgreSQL setup
+	postgresConfig := config.PostgreSQL
+	postgresConn, err := StartPostgresContainerAndSetupSchema(*postgresConfig)
+	if err != nil {
+		log.Fatalf("Failed to start PostgreSQL container: %v", err)
+	}
+
 	// local file system
 	localNetworkDir := miniminaGetNetworkDir(networkName)
 	uptimeStorageDir := localNetworkDir + "/uptime-storage"
@@ -64,7 +71,12 @@ func TestIntegration_BP_Uptime_Storage(t *testing.T) {
 	miniminaNetworkStart(networkName)
 	defer miniminaNetworkStop(networkName)
 
-	err := waitUntilLocalStorageHasBlocksAndSubmissions(uptimeStorageDir)
+	err = WaitUntilPostgresHasSubmissions(postgresConn)
+	if err != nil {
+		t.Fatalf("Failed to wait until Postgres has submissions: %v", err)
+	}
+
+	err = waitUntilLocalStorageHasBlocksAndSubmissions(uptimeStorageDir)
 	defer emptyLocalFilesystemStorage(uptimeStorageDir)
 	if err != nil {
 		t.Fatalf("Failed to wait until %s is not empty: %v", uptimeStorageDir, err)
