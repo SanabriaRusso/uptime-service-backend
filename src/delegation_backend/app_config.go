@@ -36,6 +36,8 @@ func LoadEnv(log logging.EventLogger) AppConfig {
 			os.Setenv("AWS_SECRET_ACCESS_KEY", config.Aws.SecretAccessKey)
 		}
 	} else {
+		// networkName is used as part of the S3 bucket path and influences networkId
+		// networkName = "mainnet" will result in networkId = 1 else networkId = 0 and this influeces verifySignature
 		networkName := getEnvChecked("CONFIG_NETWORK_NAME", log)
 		verifySignatureDisabled := boolEnvChecked("VERIFY_SIGNATURE_DISABLED", log)
 

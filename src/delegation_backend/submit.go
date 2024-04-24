@@ -103,6 +103,7 @@ type App struct {
 	Whitelist               *WhitelistMVar
 	WhitelistDisabled       bool
 	VerifySignatureDisabled bool
+	NetworkId               uint8
 	Save                    func(ObjectsToSave)
 	Now                     nowFunc
 }
@@ -189,7 +190,7 @@ func (h *SubmitH) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 
 		hash := blake2b.Sum256(payload)
-		if !verifySig(&req.Submitter, &req.Sig, hash[:], NetworkId()) {
+		if !verifySig(&req.Submitter, &req.Sig, hash[:], h.app.NetworkId) {
 			w.WriteHeader(401)
 			writeErrorResponse(h.app, &w, "Invalid signature")
 			return

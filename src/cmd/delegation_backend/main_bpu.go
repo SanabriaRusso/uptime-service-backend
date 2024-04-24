@@ -37,6 +37,7 @@ func main() {
 	if app.VerifySignatureDisabled {
 		log.Warnf("Signature verification is disabled, it is not recommended to run the delegation backend in this mode!")
 	}
+	app.NetworkId = NetworkId(appCfg.NetworkName)
 
 	// Storage backend setup
 	if appCfg.Aws != nil {

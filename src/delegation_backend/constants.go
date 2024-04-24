@@ -18,8 +18,8 @@ var SIG_PREFIX = [...]byte{1}
 var BLOCK_HASH_PREFIX = [...]byte{1}
 var MAX_BLOCK_SIZE = 1000000 // (1MB) max block size in bytes for Cassandra, blocks larger than this size will be stored in S3 only
 
-func NetworkId() uint8 {
-	if os.Getenv("NETWORK") == "mainnet" {
+func NetworkId(networkName string) uint8 {
+	if networkName == "mainnet" {
 		return 1
 	}
 	return 0
