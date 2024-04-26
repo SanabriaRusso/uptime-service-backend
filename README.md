@@ -95,7 +95,7 @@ The program can be configured using either a JSON configuration file or environm
     "password": "postgres",
     "host": "localhost",
     "port": 5432,
-    "database": "coordinator",
+    "database": "delegation_program",
     "sslmode": "require"
   }
 }
