@@ -126,6 +126,30 @@ func LoadEnv(log logging.EventLogger) AppConfig {
 			}
 		}
 
+		// PostgreSQL configurations
+		if postgresHost := os.Getenv("POSTGRES_HOST"); postgresHost != "" {
+			postgresUser := getEnvChecked("POSTGRES_USER", log)
+			postgresPassword := getEnvChecked("POSTGRES_PASSWORD", log)
+			postgresDBName := getEnvChecked("POSTGRES_DB", log)
+			postgresPort, err := strconv.Atoi(getEnvChecked("POSTGRES_PORT", log))
+			if err != nil {
+				log.Fatalf("Error parsing POSTGRES_PORT: %v", err)
+			}
+			postgresSSLMode := os.Getenv("POSTGRES_SSLMODE")
+			if postgresSSLMode == "" {
+				postgresSSLMode = "require"
+			}
+
+			config.PostgreSQL = &PostgreSQLConfig{
+				Host:     postgresHost,
+				Port:     postgresPort,
+				User:     postgresUser,
+				Password: postgresPassword,
+				DBName:   postgresDBName,
+				SSLMode:  postgresSSLMode,
+			}
+		}
+
 		config.NetworkName = networkName
 		config.GsheetId = gsheetId
 		config.DelegationWhitelistList = delegationWhitelistList
@@ -187,6 +211,15 @@ type LocalFileSystemConfig struct {
 	Path string `json:"path"`
 }
 
+type PostgreSQLConfig struct {
+	Host     string `json:"host"`
+	Port     int    `json:"port"`
+	User     string `json:"user"`
+	Password string `json:"password"`
+	DBName   string `json:"database"`
+	SSLMode  string `json:"sslmode"`
+}
+
 type AppConfig struct {
 	NetworkName                 string                 `json:"network_name"`
 	GsheetId                    string                 `json:"gsheet_id"`
@@ -197,4 +230,5 @@ type AppConfig struct {
 	Aws                         *AwsConfig             `json:"aws,omitempty"`
 	AwsKeyspaces                *AwsKeyspacesConfig    `json:"aws_keyspaces,omitempty"`
 	LocalFileSystem             *LocalFileSystemConfig `json:"filesystem,omitempty"`
+	PostgreSQL                  *PostgreSQLConfig      `json:"postgresql,omitempty"`
 }

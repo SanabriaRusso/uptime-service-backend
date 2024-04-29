@@ -33,6 +33,7 @@ func main() {
 	app.Log = log
 	awsctx := AwsContext{}
 	kc := KeyspaceContext{}
+	pctx := PostgreSQLContext{}
 	app.VerifySignatureDisabled = appCfg.VerifySignatureDisabled
 	if app.VerifySignatureDisabled {
 		log.Warnf("Signature verification is disabled, it is not recommended to run the delegation backend in this mode!")
@@ -72,12 +73,29 @@ func main() {
 		log.Infof("storage backend: Local File System")
 	}
 
+	if appCfg.PostgreSQL != nil {
+		log.Infof("storage backend: PostgreSQL")
+		db, err := NewPostgreSQL(appCfg.PostgreSQL)
+		if err != nil {
+			log.Fatalf("Error initializing PostgreSQL: %v", err)
+		}
+		defer db.Close()
+
+		pctx = PostgreSQLContext{
+			DB:  db,
+			Log: log,
+		}
+	}
+
 	app.Save = func(objs ObjectsToSave) {
 		if appCfg.Aws != nil {
 			awsctx.S3Save(objs)
 		}
 		if appCfg.AwsKeyspaces != nil {
 			kc.KeyspaceSave(objs)
+		}
+		if appCfg.PostgreSQL != nil {
+			pctx.PostgreSQLSave(objs)
 		}
 		if appCfg.LocalFileSystem != nil {
 			LocalFileSystemSave(objs, appCfg.LocalFileSystem.Path, log)
