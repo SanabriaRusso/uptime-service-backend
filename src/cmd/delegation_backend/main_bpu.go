@@ -121,22 +121,30 @@ func main() {
 	// Sheets service and whitelist loop
 	app.WhitelistDisabled = appCfg.DelegationWhitelistDisabled
 	if app.WhitelistDisabled {
-		log.Infof("delegation whitelist is disabled")
+		log.Infof("Delegation whitelist is disabled")
 	} else {
-		log.Infof("delegation whitelist is enabled")
 		sheetsService, err2 := sheets.NewService(ctx, option.WithScopes(sheets.SpreadsheetsReadonlyScope))
 		if err2 != nil {
 			log.Fatalf("Error creating Sheets service: %v", err2)
 		}
-		initWl := RetrieveWhitelist(sheetsService, log, appCfg)
+		initWl, err := RetrieveWhitelist(sheetsService, log, appCfg, 1)
+		if err != nil {
+			log.Fatalf("Failed to initialize whitelist: %v", err)
+		}
 		wlMvar := new(WhitelistMVar)
 		wlMvar.Replace(&initWl)
 		app.Whitelist = wlMvar
+		log.Infof("Delegation whitelist is enabled")
 		go func() {
 			for {
-				wl := RetrieveWhitelist(sheetsService, log, appCfg)
-				wlMvar.Replace(&wl)
-				time.Sleep(WHITELIST_REFRESH_INTERVAL)
+				time.Sleep(SetWhitelistRefreshInterval(log))
+				wl, err := RetrieveWhitelist(sheetsService, log, appCfg, 10)
+				if err != nil {
+					log.Errorf("Failed to refresh delegation whitelist, using previous one, error: %v", err)
+				} else {
+					wlMvar.Replace(&wl)
+					log.Infof("Delegation whitelist refreshed, number of BPs: %v", len(wl))
+				}
 			}
 		}()
 	}

@@ -25,6 +25,25 @@ func NetworkId(networkName string) uint8 {
 	return 0
 }
 
+func SetWhitelistRefreshInterval(log logging.StandardLogger) time.Duration {
+	var defaultValue time.Duration = time.Duration(10) * time.Minute
+	var whitelistRefreshInterval time.Duration
+
+	envVarValue, exists := os.LookupEnv("DELEGATION_WHITELIST_REFRESH_INTERVAL")
+	if exists {
+		minutes, err := strconv.Atoi(envVarValue)
+		if err != nil {
+			log.Warnf("Error parsing DELEGATION_WHITELIST_REFRESH_INTERVAL, falling back to default value: %v, error: %v", defaultValue, err)
+			whitelistRefreshInterval = defaultValue
+		}
+		whitelistRefreshInterval = time.Duration(minutes) * time.Minute
+	} else {
+		whitelistRefreshInterval = defaultValue
+	}
+	log.Infof("Delegation whitelist refresh interval: %v", whitelistRefreshInterval)
+	return whitelistRefreshInterval
+}
+
 func SetRequestsPerPkHourly(log logging.StandardLogger) int {
 	var defaultValue = 120
 	var requestsPerPkHourly int
