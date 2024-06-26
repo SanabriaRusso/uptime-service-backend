@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"os"
@@ -167,7 +168,8 @@ func (h *SubmitH) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		wl := h.app.Whitelist.ReadWhitelist()
 		if (*wl)[req.Submitter] == nil {
 			w.WriteHeader(401)
-			writeErrorResponse(h.app, &w, "Submitter is not registered")
+			message := fmt.Sprintf("Submitter is not registered: %s", req.Submitter)
+			writeErrorResponse(h.app, &w, message)
 			return
 		}
 	}

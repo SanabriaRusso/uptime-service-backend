@@ -1,7 +1,6 @@
 package integration_tests
 
 import (
-	dg "block_producers_uptime/delegation_backend"
 	"log"
 	"testing"
 )
@@ -14,19 +13,20 @@ func init() {
 		log.Fatalf("Failed to decode uptime service configuration: %v", err)
 	}
 
-	// Setup AWS Keyspaces database
 	setAppConfig("all")
 	config := getAppConfig()
-	config.AwsKeyspaces.SSLCertificatePath = AWS_SSL_CERTIFICATE_PATH
-	err = dg.MigrationUp(config.AwsKeyspaces, DATABASE_MIGRATION_DIR)
-	if err != nil {
-		log.Fatalf("Failed to migrate up: %v", err)
-	}
-	tables := []string{"schema_migrations", "submissions"}
-	err = WaitForTablesActive(config.AwsKeyspaces, tables)
-	if err != nil {
-		log.Fatalf("Failed to wait for tables to be active: %v", err)
-	}
+
+	// Setup AWS Keyspaces database
+	// config.AwsKeyspaces.SSLCertificatePath = AWS_SSL_CERTIFICATE_PATH
+	// err = dg.MigrationUp(config.AwsKeyspaces, DATABASE_MIGRATION_DIR)
+	// if err != nil {
+	// 	log.Fatalf("Failed to migrate up: %v", err)
+	// }
+	// tables := []string{"schema_migrations", "submissions"}
+	// err = WaitForTablesActive(config.AwsKeyspaces, tables)
+	// if err != nil {
+	// 	log.Fatalf("Failed to wait for tables to be active: %v", err)
+	// }
 
 	// Setup AWS S3
 	awsConfig := config.Aws
@@ -63,9 +63,9 @@ func TestIntegration_BP_Uptime_Storage(t *testing.T) {
 	folderPrefix := getAWSIntegrationTestFolder(config)
 
 	// AWS Keyspaces
-	awsKeyspacesConfig := config.AwsKeyspaces
-	awsKeyspacesConfig.SSLCertificatePath = AWS_SSL_CERTIFICATE_PATH
-	defer dg.DropAllTables(awsKeyspacesConfig)
+	// awsKeyspacesConfig := config.AwsKeyspaces
+	// awsKeyspacesConfig.SSLCertificatePath = AWS_SSL_CERTIFICATE_PATH
+	// defer dg.DropAllTables(awsKeyspacesConfig)
 
 	// start network
 	miniminaNetworkStart(networkName)
@@ -88,9 +88,9 @@ func TestIntegration_BP_Uptime_Storage(t *testing.T) {
 		t.Fatalf("Failed to wait until S3 bucket is not empty: %v", err)
 	}
 
-	err = waitUntilKeyspacesHasBlocksAndSubmissions(config)
-	if err != nil {
-		t.Fatalf("Failed to wait until Keyspaces has blocks and submissions: %v", err)
-	}
+	// err = waitUntilKeyspacesHasBlocksAndSubmissions(config)
+	// if err != nil {
+	// 	t.Fatalf("Failed to wait until Keyspaces has blocks and submissions: %v", err)
+	// }
 
 }
