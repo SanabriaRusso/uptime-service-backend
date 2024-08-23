@@ -3,6 +3,7 @@ package main
 import (
 	. "block_producers_uptime/delegation_backend"
 	"context"
+	"encoding/json"
 	"net/http"
 	"time"
 
@@ -13,6 +14,11 @@ import (
 	"google.golang.org/api/option"
 	sheets "google.golang.org/api/sheets/v4"
 )
+
+// HealthStatus represents the JSON response structure for the /health endpoint
+type HealthStatus struct {
+	Status string `json:"status"`
+}
 
 func main() {
 	// Setup logging
@@ -30,6 +36,7 @@ func main() {
 	ctx := context.Background()
 	appCfg := LoadEnv(log)
 	app := new(App)
+	app.IsReady = false
 	app.Log = log
 	awsctx := AwsContext{}
 	kc := KeyspaceContext{}
@@ -118,6 +125,17 @@ func main() {
 	})
 	http.Handle("/v1/submit", app.NewSubmitH())
 
+	// Health check endpoint
+	http.HandleFunc("/health", func(rw http.ResponseWriter, r *http.Request) {
+		if app.IsReady {
+			rw.WriteHeader(http.StatusOK)
+			json.NewEncoder(rw).Encode(HealthStatus{Status: "ok"})
+		} else {
+			rw.WriteHeader(http.StatusServiceUnavailable)
+			json.NewEncoder(rw).Encode(HealthStatus{Status: "unavailable"})
+		}
+	})
+
 	// Sheets service and whitelist loop
 	app.WhitelistDisabled = appCfg.DelegationWhitelistDisabled
 	if app.WhitelistDisabled {
@@ -150,5 +168,6 @@ func main() {
 	}
 
 	// Start server
+	app.IsReady = true
 	log.Fatal(http.ListenAndServe(DELEGATION_BACKEND_LISTEN_TO, nil))
 }
