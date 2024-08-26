@@ -71,11 +71,6 @@ func TestIntegration_BP_Uptime_Storage(t *testing.T) {
 	miniminaNetworkStart(networkName)
 	defer miniminaNetworkStop(networkName)
 
-	err = WaitUntilPostgresHasSubmissions(postgresConn)
-	if err != nil {
-		t.Fatalf("Failed to wait until Postgres has submissions: %v", err)
-	}
-
 	err = waitUntilLocalStorageHasBlocksAndSubmissions(uptimeStorageDir)
 	defer emptyLocalFilesystemStorage(uptimeStorageDir)
 	if err != nil {
@@ -86,6 +81,11 @@ func TestIntegration_BP_Uptime_Storage(t *testing.T) {
 	defer emptyS3IntegrationTestFolder(*awsConfig, folderPrefix)
 	if err != nil {
 		t.Fatalf("Failed to wait until S3 bucket is not empty: %v", err)
+	}
+
+	err = WaitUntilPostgresHasSubmissions(postgresConn)
+	if err != nil {
+		t.Fatalf("Failed to wait until Postgres has submissions: %v", err)
 	}
 
 	// err = waitUntilKeyspacesHasBlocksAndSubmissions(config)
