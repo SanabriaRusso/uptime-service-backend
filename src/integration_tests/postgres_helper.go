@@ -53,6 +53,22 @@ func StartPostgresContainerAndSetupSchema(config delegation_backend.PostgreSQLCo
 		return nil, fmt.Errorf("failed to connect to the database: %v", err)
 	}
 
+	// wait for the PostgreSQL to be ready
+	timeout := time.After(TIMEOUT_IN_S * time.Second)
+	tick := time.Tick(5 * time.Second)
+	ready := false
+	for !ready {
+		select {
+		case <-timeout:
+			return nil, fmt.Errorf("timeout reached while waiting for PostgreSQL to be ready")
+		case <-tick:
+			if err = db.Ping(); err == nil {
+				log.Println("PostgreSQL is ready")
+				ready = true
+			}
+		}
+	}
+
 	submissions_schema := `CREATE TABLE IF NOT EXISTS submissions (
 		id SERIAL PRIMARY KEY,
 		submitted_at_date DATE NOT NULL,
