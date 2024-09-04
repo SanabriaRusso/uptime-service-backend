@@ -56,7 +56,6 @@ jobs:
         minimina node logs -n integration-test -i uptime-service-backend -r > integration-test/logs/uptime-service-backend.log
         minimina node logs -n integration-test -i node-a -r > integration-test/logs/node-a.log
         minimina node logs -n integration-test -i node-b -r > integration-test/logs/node-b.log
-        minimina node logs -n integration-test -i node-c -r > integration-test/logs/node-c.log
 
     - name: 📎 Upload logs
       uses: actions/upload-artifact@v3
