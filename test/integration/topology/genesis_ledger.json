@@ -41,11 +41,6 @@
                 "balance": "300000"
             },
             {
-                "pk": "B62qoztWpP8cJbknVWCcW2u56Y44wLNqpsompb5dDGoG1o6nfeatTKX",
-                "sk": "EKF44LaJVQKTT1iuSJ3XifSFFtBndMb741kHPzVcYAtYEyJbZ11s",
-                "balance": "300000"
-            },
-            {
                 "pk": "B62qjwzawZqMmm27zwDg5xF8XtrH1TcQedsS3EVStct8wr1FcpRZFbm",
                 "sk": "EKFBPN3My4Y5GqaYj9pMYvtfzvrzuSQyvTEgxTZmCx4QZg7vJePB",
                 "balance": "0"

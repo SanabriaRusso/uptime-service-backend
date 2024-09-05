@@ -30,6 +30,7 @@ func main() {
 	ctx := context.Background()
 	appCfg := LoadEnv(log)
 	app := new(App)
+	app.IsReady = false
 	app.Log = log
 	awsctx := AwsContext{}
 	kc := KeyspaceContext{}
@@ -118,6 +119,11 @@ func main() {
 	})
 	http.Handle("/v1/submit", app.NewSubmitH())
 
+	// Health check endpoint
+	http.HandleFunc("/health", HealthHandler(func() bool {
+		return app.IsReady
+	}))
+
 	// Sheets service and whitelist loop
 	app.WhitelistDisabled = appCfg.DelegationWhitelistDisabled
 	if app.WhitelistDisabled {
@@ -150,5 +156,6 @@ func main() {
 	}
 
 	// Start server
+	app.IsReady = true
 	log.Fatal(http.ListenAndServe(DELEGATION_BACKEND_LISTEN_TO, nil))
 }

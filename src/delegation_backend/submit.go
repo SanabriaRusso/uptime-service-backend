@@ -107,6 +107,7 @@ type App struct {
 	NetworkId               uint8
 	Save                    func(ObjectsToSave)
 	Now                     nowFunc
+	IsReady                 bool
 }
 
 type SubmitH struct {
