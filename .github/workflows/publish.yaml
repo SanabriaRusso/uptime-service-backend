@@ -13,7 +13,6 @@ on:
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
-  DOCKER_TAG_PREFIX: ${{ github.event.inputs.docker_tag_prefix }}
 
 # This allows a subsequently queued workflow run to interrupt previous runs
 concurrency:
@@ -33,7 +32,7 @@ jobs:
         run: |
           BRANCH_OR_TAG=$(basename ${{ github.ref }})
           if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
-            PREFIX=${{ env.DOCKER_TAG_PREFIX }}
+            PREFIX="${{ github.event.inputs.docker_tag_prefix }}"
             SHORT_SHA=$(echo $GITHUB_SHA | cut -c1-7)
             echo "TAG=$PREFIX-$BRANCH_OR_TAG-$SHORT_SHA" >> $GITHUB_ENV
           elif [ "${{ github.event_name }}" == "push" ] && [ -n "${{ github.event.ref }}" ]; then
