@@ -12,11 +12,11 @@ on:
 
 jobs:
   build:
-    runs-on: minafoundation-default-runners
+    runs-on: ubuntu-latest
 
     steps:
     - name: 📥 Checkout
-      uses: actions/checkout@v3    
+      uses: actions/checkout@v4
 
     - name: 📥 Update Git Submodules
       run: |
@@ -38,3 +38,21 @@ jobs:
 
     - name: 🧪 Test
       run: nix-shell --run "make test"
+
+    - name: 🔑 Log in to Container Registry
+      if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+      uses: docker/login-action@v3
+      with:
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: 🏷️ Tag and Push Docker Image
+      if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+      run: |
+        # Tag the existing image for GHCR
+        docker tag uptime-service-backend-test ghcr.io/${{ github.repository_owner }}/uptime-service-backend:latest
+        docker tag uptime-service-backend-test ghcr.io/${{ github.repository_owner }}/uptime-service-backend:${{ github.sha }}
+        # Push to GHCR
+        docker push ghcr.io/${{ github.repository_owner }}/uptime-service-backend:latest
+        docker push ghcr.io/${{ github.repository_owner }}/uptime-service-backend:${{ github.sha }}
