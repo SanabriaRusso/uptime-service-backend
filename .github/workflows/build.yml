@@ -10,6 +10,9 @@ on:
     branches: 
       - main
 
+env:
+  REPO_OWNER_LOWER: ${{ github.repository_owner }}
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -53,22 +56,25 @@ jobs:
       run: echo "branch=${{ github.head_ref }}" >> $GITHUB_OUTPUT
       id: extract_branch
 
+    - name: Repo owner lowercase
+      run: echo "REPO_OWNER_LOWER=$(echo ${{ github.repository_owner }} | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
+
     - name: 🏷️ Tag and Push Docker Image (main branch)
       if: github.event_name == 'push' && github.ref == 'refs/heads/main'
       run: |
         # Tag the existing image for GHCR
-        docker tag uptime-service-backend-test ghcr.io/${{ github.repository_owner }}/uptime-service-backend:latest
-        docker tag uptime-service-backend-test ghcr.io/${{ github.repository_owner }}/uptime-service-backend:${{ github.sha }}
+        docker tag uptime-service-backend-test ghcr.io/${{ env.REPO_OWNER_LOWER }}/uptime-service-backend:latest
+        docker tag uptime-service-backend-test ghcr.io/${{ env.REPO_OWNER_LOWER }}/uptime-service-backend:${{ github.sha }}
         # Push to GHCR
-        docker push ghcr.io/${{ github.repository_owner }}/uptime-service-backend:latest
-        docker push ghcr.io/${{ github.repository_owner }}/uptime-service-backend:${{ github.sha }}
+        docker push ghcr.io/${{ env.REPO_OWNER_LOWER }}/uptime-service-backend:latest
+        docker push ghcr.io/${{ env.REPO_OWNER_LOWER }}/uptime-service-backend:${{ github.sha }}
 
     - name: 🏷️ Tag and Push Docker Image (pull request)
       if: github.event_name == 'pull_request'
       run: |
         # Tag the existing image for GHCR with branch name
-        docker tag uptime-service-backend-test ghcr.io/${{ github.repository_owner }}/uptime-service-backend:${{ steps.extract_branch.outputs.branch }}
-        docker tag uptime-service-backend-test ghcr.io/${{ github.repository_owner }}/uptime-service-backend:${{ github.sha }}
+        docker tag uptime-service-backend-test ghcr.io/${{ env.REPO_OWNER_LOWER }}/uptime-service-backend:${{ steps.extract_branch.outputs.branch }}
+        docker tag uptime-service-backend-test ghcr.io/${{ env.REPO_OWNER_LOWER }}/uptime-service-backend:${{ github.sha }}
         # Push to GHCR
-        docker push ghcr.io/${{ github.repository_owner }}/uptime-service-backend:${{ steps.extract_branch.outputs.branch }}
-        docker push ghcr.io/${{ github.repository_owner }}/uptime-service-backend:${{ github.sha }}
+        docker push ghcr.io/${{ env.REPO_OWNER_LOWER }}/uptime-service-backend:${{ steps.extract_branch.outputs.branch }}
+        docker push ghcr.io/${{ env.REPO_OWNER_LOWER }}/uptime-service-backend:${{ github.sha }}
