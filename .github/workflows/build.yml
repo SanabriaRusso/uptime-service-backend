@@ -73,8 +73,8 @@ jobs:
       if: github.event_name == 'pull_request'
       run: |
         # Tag the existing image for GHCR with branch name
-        docker tag uptime-service-backend-test ghcr.io/${{ env.REPO_OWNER_LOWER }}/uptime-service-backend:${{ steps.extract_branch.outputs.branch }}
-        docker tag uptime-service-backend-test ghcr.io/${{ env.REPO_OWNER_LOWER }}/uptime-service-backend:${{ github.sha }}
+        docker tag uptime-service-backend-test:latest ghcr.io/${{ env.REPO_OWNER_LOWER }}/uptime-service-backend:${{ steps.extract_branch.outputs.branch }}
+        docker tag uptime-service-backend-test:latest ghcr.io/${{ env.REPO_OWNER_LOWER }}/uptime-service-backend:${{ github.sha }}
         # Push to GHCR
         docker push ghcr.io/${{ env.REPO_OWNER_LOWER }}/uptime-service-backend:${{ steps.extract_branch.outputs.branch }}
         docker push ghcr.io/${{ env.REPO_OWNER_LOWER }}/uptime-service-backend:${{ github.sha }}
