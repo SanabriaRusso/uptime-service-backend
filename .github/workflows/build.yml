@@ -9,6 +9,7 @@ on:
   pull_request:
     branches: 
       - main
+  workflow_dispatch:
 
 jobs:
   build:
@@ -40,14 +41,20 @@ jobs:
       run: nix-shell --run "make test"
 
     - name: 🔑 Log in to Container Registry
-      if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+      if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || github.event_name == 'workflow_dispatch'
       uses: docker/login-action@v3
       with:
         registry: ghcr.io
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
 
-    - name: 🏷️ Tag and Push Docker Image
+    - name: 🏷️ Extract branch name
+      if: github.event_name == 'workflow_dispatch'
+      shell: bash
+      run: echo "branch=${GITHUB_HEAD_REF:-${GITHUB_REF#refs/heads/}}" >> $GITHUB_OUTPUT
+      id: extract_branch
+
+    - name: 🏷️ Tag and Push Docker Image (main branch)
       if: github.event_name == 'push' && github.ref == 'refs/heads/main'
       run: |
         # Tag the existing image for GHCR
@@ -55,4 +62,14 @@ jobs:
         docker tag uptime-service-backend-test ghcr.io/${{ github.repository_owner }}/uptime-service-backend:${{ github.sha }}
         # Push to GHCR
         docker push ghcr.io/${{ github.repository_owner }}/uptime-service-backend:latest
+        docker push ghcr.io/${{ github.repository_owner }}/uptime-service-backend:${{ github.sha }}
+
+    - name: 🏷️ Tag and Push Docker Image (manual trigger)
+      if: github.event_name == 'workflow_dispatch'
+      run: |
+        # Tag the existing image for GHCR with branch name
+        docker tag uptime-service-backend-test ghcr.io/${{ github.repository_owner }}/uptime-service-backend:${{ steps.extract_branch.outputs.branch }}
+        docker tag uptime-service-backend-test ghcr.io/${{ github.repository_owner }}/uptime-service-backend:${{ github.sha }}
+        # Push to GHCR
+        docker push ghcr.io/${{ github.repository_owner }}/uptime-service-backend:${{ steps.extract_branch.outputs.branch }}
         docker push ghcr.io/${{ github.repository_owner }}/uptime-service-backend:${{ github.sha }}
