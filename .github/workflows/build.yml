@@ -37,7 +37,7 @@ jobs:
 
     - name: 🛠️ Build Docker
       env:
-        TAG: ${{ env.IMAGE_NAME }}
+        TAG: latest
       run: nix-shell --run "make docker"
 
     - name: 🧪 Test
